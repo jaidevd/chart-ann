@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  <title>chart_annotation</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <div class="container-fluid py-4">
+    <div class="card-deck">
+      <div class="card">
+        <div class="card-header bg-white d-flex justify-content-between">
+          <h5 class="card-title my-0">Paste Image Here</h5>
+          <div class="d-flex align-items-center small">
+          </div>
+        </div><!-- .card-header -->
+        <div class="card-body">
+          <canvas style="border:1px solid grey;" id="my_canvas" width="300" height="300"></canvas>
+        </div><!-- .card-body -->
+      </div><!-- .card -->
+      <div class="card">
+        <div class="card-header bg-white d-flex justify-content-between">
+          <h5 class="card-title my-0">Answer these questions about the image.</h5>
+          <div class="d-flex align-items-center small">
+          </div>
+        </div><!-- .card-header -->
+        <div class="card-body">
+          <form id="imageMetaForm">
+            <label for="chartType">What kind of a chart is this?</label>
+            <template>
+              <datalist id="chartList">
+                <% _.each(CHART_TYPES, function(chart) { %>
+                <option value="<%=chart%>"><%= chart%></option>
+                <%})%>
+              </datalist>
+            </template>
+            <input type="text" list="chartList" name="chartClass">
+            <button class="btn btn-primary" type="submit">Submit</button>
+          </form>
+        </div><!-- .card-body -->
+      </div><!-- .card -->
+    </div><!-- .card -->
+  </div><!-- .container-fluid -->
+
+  <script src="ui/jquery/dist/jquery.min.js"></script>
+  <script src="ui/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="ui/lodash/lodash.min.js"></script>
+  <script src="ui/g1/dist/g1.min.js"></script>
+  <!-- Commonly used libraries:
+  <script src="ui/d3v5/dist/d3.min.js"></script>
+  <script src="ui/morphdom/dist/morphdom-umd.min.js"></script>
+  <script src="ui/moment/min/moment-with-locales.min.js"></script>
+  <script src="ui/daterangepicker/daterangepicker.js"></script>
+  <script src="ui/leaflet/dist/leaflet.js"></script>
+  <script src="ui/topojson/dist/topojson.min.js"></script>
+  -->
+  <script>
+    var CLIPBOARD = new CLIPBOARD_CLASS("my_canvas", true);
+    var CHART_TYPES = []
+
+    /**
+     * image pasting into canvas
+     *
+     * @param {string} canvas_id - canvas id
+     * @param {boolean} autoresize - if canvas will be resized
+     */
+    function CLIPBOARD_CLASS(canvas_id, autoresize) {
+      var _self = this;
+      var canvas = document.getElementById(canvas_id);
+      var ctx = document.getElementById(canvas_id).getContext("2d");
+
+      //handlers
+      document.addEventListener('paste', function (e) { _self.paste_auto(e); }, false);
+
+      //on paste
+      this.paste_auto = function (e) {
+        if (e.clipboardData) {
+          var items = e.clipboardData.items;
+          if (!items) return;
+
+          //access data directly
+          var is_image = false;
+          for (var i = 0; i < items.length; i++) {
+            if (items[i].type.indexOf("image") !== -1) {
+              //image
+              var blob = items[i].getAsFile();
+              var URLObj = window.URL || window.webkitURL;
+              var source = URLObj.createObjectURL(blob);
+              this.paste_createImage(source);
+              is_image = true;
+            }
+          }
+          if(is_image == true){
+            e.preventDefault();
+          }
+        }
+      };
+      //draw pasted image to canvas
+      this.paste_createImage = function (source) {
+        var pastedImage = new Image();
+        pastedImage.onload = function () {
+          if(autoresize == true){
+            //resize
+            canvas.width = pastedImage.width;
+            canvas.height = pastedImage.height;
+          }
+          else{
+            //clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+          }
+          ctx.drawImage(pastedImage, 0, 0);
+        };
+        pastedImage.src = source;
+      };
+    }
+$('#imageMetaForm').on('submit', function(e) {
+  e.preventDefault();
+  let data = $(this).serializeArray()
+  console.log(data)
+  let imageEnc = document.getElementById('my_canvas').toDataURL()
+  $.ajax({
+    type: "POST", url: 'data', success: console.log,
+    data: JSON.stringify({label: data[0].value, image: imageEnc})
+  })
+})
+$(function(e) {
+  $.getJSON('chart_types.json').done(function(e) {
+    CHART_TYPES = e
+    $('body').template({CHART_TYPES: CHART_TYPES})
+  })
+})
+  </script>
+</body>
+
+</html>

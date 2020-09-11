@@ -124,8 +124,8 @@ $('#imageMetaForm').on('submit', function(e) {
   console.log(data)
   let imageEnc = document.getElementById('my_canvas').toDataURL()
   $.ajax({
-    type: "POST", url: 'data', success: console.log,
-    data: JSON.stringify({label: data[0].value, image: imageEnc})
+    method: "POST", url: 'data', success: location.reload,
+    data: {label: data[0].value, image: imageEnc}
   })
 })
 $(function(e) {

@@ -3,6 +3,8 @@
 
 # Configurations for app: chart_annotation
 # ----------------------------------------------------------------------------
+variables:
+  DB_URL: sqlite:///$YAMLPATH/charts.db
 url:
   chart_annotation-home:
     pattern: /$YAMLURL/
@@ -22,11 +24,15 @@ url:
     pattern: /$YAMLURL/data
     handler: FormHandler
     kwargs:
-      url: sqlite:///$YAMLPATH/charts.db
+      url: $DB_URL
       table: charts
       id: chart_id
       xsrf_cookies: false
-      modify: chart_annotation.view
+  view-charts:
+    pattern: /$YAMLURL/chart/(.*)
+    handler: FunctionHandler
+    kwargs:
+      function: chart_annotation.view
 
   chart_annotation-login:
     pattern: /$YAMLURL/login/

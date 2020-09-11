@@ -5,6 +5,7 @@
 # ----------------------------------------------------------------------------
 variables:
   DB_URL: sqlite:///$YAMLPATH/charts.db
+
 url:
   chart_annotation-home:
     pattern: /$YAMLURL/
@@ -33,7 +34,12 @@ url:
     handler: FunctionHandler
     kwargs:
       function: chart_annotation.view
-
+  unique-chart-names:
+    pattern: /$YAMLURL/uniq
+    handler: FormHandler
+    kwargs:
+      url: $DB_URL
+      query: "SELECT DISTINCT(label) FROM charts"
   chart_annotation-login:
     pattern: /$YAMLURL/login/
     # You MUST change the auth before deploying. DBAuth is commonly used.

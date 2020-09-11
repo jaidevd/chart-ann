@@ -4,33 +4,33 @@
 <head>
   <meta charset="utf-8">
   <meta http-equiv="x-ua-compatible" content="ie=edge">
-  <title>chart_annotation</title>
+  <title>Chart Annotation</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
-
   <div class="container-fluid py-4">
+    <h1 class="text-center text-muted">Chart annotation</h1>
     <div class="card-deck">
-      <div class="card">
+      <div class="card border-0">
         <div class="card-header bg-white d-flex justify-content-between">
-          <h5 class="card-title my-0">Paste Image Here</h5>
+          <h5 class="card-title my-0">Paste Chart image here</h5>
           <div class="d-flex align-items-center small">
           </div>
         </div><!-- .card-header -->
-        <div class="card-body">
-          <canvas style="border:1px solid grey;" id="my_canvas" width="300" height="300"></canvas>
+        <div class="card-body overflow-auto">
+          <canvas class="shadow border-0" style="border:1px solid grey;" id="my_canvas" width="300" height="300"></canvas>
         </div><!-- .card-body -->
       </div><!-- .card -->
-      <div class="card">
+      <div class="card border-0">
         <div class="card-header bg-white d-flex justify-content-between">
-          <h5 class="card-title my-0">Answer these questions about the image.</h5>
+          <h5 class="card-title my-0">Annotate the chart</h5>
           <div class="d-flex align-items-center small">
           </div>
         </div><!-- .card-header -->
         <div class="card-body">
-          <form id="imageMetaForm">
+          <form class="form-inline" id="imageMetaForm">
             <label for="chartType">What kind of a chart is this?</label>
             <template>
               <datalist id="chartList">
@@ -39,12 +39,19 @@
                 <%})%>
               </datalist>
             </template>
-            <input type="text" list="chartList" name="chartClass">
+            <div class="form-group mr-sm-3">
+              <input class="form-control" type="text" list="chartList" name="chartClass">
+            </div>
             <button class="btn btn-primary" type="submit">Submit</button>
           </form>
         </div><!-- .card-body -->
       </div><!-- .card -->
     </div><!-- .card -->
+    <p>
+      For instructions, view the <a href="https://docs.google.com/spreadsheets/d/1lEB3cTDC0sASvZvdQTMRYzTndSrUtHN48ry6oG0MoGY/edit#gid=864195404" target="_blank" rel="noopener">spreadsheet</a>.
+
+      Questions? Ask Bhanu or Jaidev.
+    </p>
   </div><!-- .container-fluid -->
 
   <script src="ui/jquery/dist/jquery.min.js"></script>
@@ -118,23 +125,31 @@
         pastedImage.src = source;
       };
     }
-$('#imageMetaForm').on('submit', function(e) {
-  e.preventDefault();
-  let data = $(this).serializeArray()
-  console.log(data)
-  let imageEnc = document.getElementById('my_canvas').toDataURL()
-  $.ajax({
-    method: "POST", url: 'data', success: location.reload,
-    data: {label: data[0].value, image: imageEnc}
+
+  $('#imageMetaForm').on('submit', function(e) {
+    e.preventDefault();
+    let data = $(this).serializeArray()
+    console.log(data)
+    let imageEnc = document.getElementById('my_canvas').toDataURL()
+    $.ajax({
+      method: "POST", url: 'data',
+      success: function() {
+        location.reload()
+      },
+      data: {label: data[0].value, image: imageEnc}
+    })
   })
-})
-$(function(e) {
-  $.getJSON('chart_types.json').done(function(e) {
-    CHART_TYPES = e
-    $('body').template({CHART_TYPES: CHART_TYPES})
+  $(function() {
+    fetch('uniq')
+      .then(response => response.json())
+      .then(function(data) {
+        data = _.map(data, 'label')
+        $.getJSON('chart_types.json').done(function(e) {
+          CHART_TYPES = e
+          $('body').template({CHART_TYPES: [...data, ...CHART_TYPES]})
+        })
+    })
   })
-})
   </script>
 </body>
-
 </html>

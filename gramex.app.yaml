@@ -1,0 +1,44 @@
+url:
+  chart_annotation-home:
+    pattern: /$YAMLURL/
+    handler: FileHandler
+    kwargs:
+      path: $YAMLPATH/index.html
+      # See https://learn.gramener.com/guide/auth/#authorization for auth rules
+      auth:
+        login_url: /$YAMLURL/google
+      template: true
+      headers:
+        # Templates may have user-specific content. Cache privately.
+        # Keep max-age small (in case we log out & log in as another user.)
+        Cache-Control: private, max-age=1
+    cache: {expiry: {duration: 1}}
+  chart_annotation/training-data:
+    pattern: /$YAMLURL/data
+    handler: FormHandler
+    kwargs:
+      url: $DB_URL
+      table: charts
+      id: chart_id
+      xsrf_cookies: false
+  chart_annotation/view-charts:
+    pattern: /$YAMLURL/chart/(.*)
+    handler: FunctionHandler
+    kwargs:
+      function: chart_annotation.view
+  chart_annotation/unique-chart-names:
+    pattern: /$YAMLURL/uniq
+    handler: FormHandler
+    kwargs:
+      url: $DB_URL
+      query: "SELECT DISTINCT(label) FROM charts"
+  chart_annotation/login/google:
+    pattern: /$YAMLURL/google   # Map this URL
+    handler: GoogleAuth         # to the GoogleAuth handler
+    kwargs:
+      key: $DISCOVER_GOOGLE_KEY            # Set your app key
+      secret: $DISCOVER_GOOGLE_SECRET      # Set your app secret
+
+  chart_annotation-logout:
+    pattern: /$YAMLURL/logout/
+    handler: LogoutHandler

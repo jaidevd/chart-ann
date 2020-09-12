@@ -129,7 +129,6 @@
   $('#imageMetaForm').on('submit', function(e) {
     e.preventDefault();
     let data = $(this).serializeArray()
-    console.log(data)
     let imageEnc = document.getElementById('my_canvas').toDataURL()
     $.ajax({
       method: "POST", url: 'data',

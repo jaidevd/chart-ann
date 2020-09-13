@@ -10,6 +10,9 @@ assets/**
 node_modules/
 bower_components/
 
+# Ignore secrets file
+.secrets.yml
+
 # Filenames should NOT have spaces
 * *
 

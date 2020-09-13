@@ -6,60 +6,12 @@
 variables:
   DB_URL: sqlite:///$YAMLPATH/charts.db
 
-url:
-  chart_annotation-home:
-    pattern: /$YAMLURL/
-    handler: FileHandler
-    kwargs:
-      path: $YAMLPATH/index.html
-      # See https://learn.gramener.com/guide/auth/#authorization for auth rules
-      auth:
-        login_url: /$YAMLURL/login/
-      template: true
-      headers:
-        # Templates may have user-specific content. Cache privately.
-        # Keep max-age small (in case we log out & log in as another user.)
-        Cache-Control: private, max-age=1
-    cache: {expiry: {duration: 1}}
-  training-data:
-    pattern: /$YAMLURL/data
-    handler: FormHandler
-    kwargs:
-      url: $DB_URL
-      table: charts
-      id: chart_id
-      xsrf_cookies: false
-  view-charts:
-    pattern: /$YAMLURL/chart/(.*)
-    handler: FunctionHandler
-    kwargs:
-      function: chart_annotation.view
-  unique-chart-names:
-    pattern: /$YAMLURL/uniq
-    handler: FormHandler
-    kwargs:
-      url: $DB_URL
-      query: "SELECT DISTINCT(label) FROM charts"
-  chart_annotation-login:
-    pattern: /$YAMLURL/login/
-    # You MUST change the auth before deploying. DBAuth is commonly used.
-    # See https://learn.gramener.com/guide/auth/#database-auth
-    handler: SimpleAuth
-    kwargs:
-      template: $YAMLPATH/login.html
-      credentials:
-        alpha: alpha
-        beta: beta
-
-  chart_annotation-logout:
-    pattern: /$YAMLURL/logout/
-    handler: LogoutHandler
-
 # Notify testers what user ID and password to use
 test:
   auth:
-    user: alpha
-    password: alpha
+    user: '*@gramener.com'
+    password: (google)
+    login_url: /$YAMLURL/google
 
 
 # Gramex init configurations for app: chart_annotation
@@ -69,6 +21,7 @@ import:
   # replace 'YOUR-PROD-SERVER-NAME' with your production server host name.
   deploy if socket.gethostname() in {'YOUR-PROD-SERVER-NAME'}: $GRAMEXPATH/deploy.yaml
   # For alternate methods, see https://learn.gramener.com/guide/config/#conditions
+  secret: $YAMLPATH/.secrets.yml
 
   # /ui/ has Gramex UI components -- use this like the node_modules/ directory
   ui:
@@ -88,7 +41,7 @@ import:
     ADMIN_AUTH:
       membership:
         hd: gramener.com                    # Only @gramener.com Google Auth are admins
-
+  app: $YAMLPATH/gramex.app.yaml
 
 handlers:
   BaseHandler:

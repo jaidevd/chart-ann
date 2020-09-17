@@ -12,6 +12,12 @@
 <body>
   <div class="container-fluid py-4">
     <h1 class="text-center text-muted">Chart annotation</h1>
+
+    <p class="bg-warning lead p-3 round">
+      We received <code>>500</code> images for training the model from 37 projects! We're pausing the chart classification until further notice.
+
+      You can view the submitted images at <a class="alert-link" href="gallery">Gallery</a>.
+    </p>
     <div class="card-deck">
       <div class="card border-0">
         <div class="card-header bg-white d-flex justify-content-between">
@@ -40,9 +46,9 @@
               </datalist>
             </template>
             <div class="form-group mr-sm-3">
-              <input class="form-control" type="text" list="chartList" name="chartClass">
+              <input class="form-control" type="text" list="chartList" name="chartClass" disabled>
             </div>
-            <button class="btn btn-primary" type="submit">Submit</button>
+            <button class="btn btn-primary" type="submit" disabled>Submit</button>
           </form>
         </div><!-- .card-body -->
       </div><!-- .card -->

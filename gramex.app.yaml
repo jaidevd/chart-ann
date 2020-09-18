@@ -27,6 +27,19 @@ url:
         # Keep max-age small (in case we log out & log in as another user.)
         Cache-Control: private, max-age=1
     cache: {expiry: {duration: 1}}
+  chart_annotation-validate:
+    pattern: /$YAMLURL/validate
+    handler: FileHandler
+    kwargs:
+      path: $YAMLPATH/validate.html
+      # See https://learn.gramener.com/guide/auth/#authorization for auth rules
+      auth: *AUTHVARS
+      template: true
+      headers:
+        # Templates may have user-specific content. Cache privately.
+        # Keep max-age small (in case we log out & log in as another user.)
+        Cache-Control: private, max-age=1
+    cache: {expiry: {duration: 1}}
   chart_annotation/training-data:
     pattern: /$YAMLURL/data
     handler: FormHandler
@@ -48,6 +61,24 @@ url:
     kwargs:
       url: $DB_URL
       query: "SELECT DISTINCT(label) FROM charts"
+      auth: *AUTHVARS
+      headers:
+        # cache for 1 day
+        Cache-Control: public, max-age=86400
+    cache: true
+  chart_annotation/one-chart:
+    pattern: /$YAMLURL/onechart
+    handler: FormHandler
+    kwargs:
+      url: $DB_URL
+      query: "SELECT * FROM charts WHERE is_validated=0 LIMIT 1"
+      auth: *AUTHVARS
+  chart_annotation/validated:
+    pattern: /$YAMLURL/validated
+    handler: FormHandler
+    kwargs:
+      url: $DB_URL
+      query: "SELECT label, validated_label, is_validated FROM charts WHERE is_validated=1"
       auth: *AUTHVARS
   chart_annotation/login/google:
     pattern: /$YAMLURL/google   # Map this URL

@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  <title>Chart Annotation</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <div class="container-fluid py-4">
+    <h1 class="text-center text-muted">Chart annotation - Validation</h1>
+
+    <div class="card-deck">
+      <div class="card border-0">
+        <div class="card-header bg-white d-flex justify-content-between">
+          <h5 class="card-title my-0">Chart</h5>
+          <div class="d-flex align-items-center small">
+          </div>
+        </div><!-- .card-header -->
+        <div class="card-body overflow-auto">
+          <img class="shadow border-0" style="border:1px solid grey;">
+        </div><!-- .card-body -->
+      </div><!-- .card -->
+      <div class="card border-0">
+        <div class="card-header bg-white d-flex justify-content-between">
+          <h5 class="card-title my-0">Validate the chart label</h5>
+          <div class="d-flex align-items-center small">
+          </div>
+        </div><!-- .card-header -->
+        <div class="card-body">
+          <p class="p-2">
+            Currently labeled as <span class="d-inline p-2 bg-warning mylabel"></span>
+          </p>
+          <form class="form-inline" id="imageMetaForm">
+            <label for="chartType">What is the correct label?</label>
+            <template>
+              <datalist id="chartList">
+                <% _.each(CHART_TYPES, function(chart) { %>
+                <option value="<%=chart%>"><%= chart%></option>
+                <%})%>
+              </datalist>
+            </template>
+            <div class="form-group mr-sm-3">
+              <input class="form-control" type="text" list="chartList" name="chartClass" autofocus>
+            </div>
+            <button class="btn btn-primary" type="submit">Submit</button>
+          </form>
+        </div><!-- .card-body -->
+      </div><!-- .card -->
+    </div><!-- .card -->
+    <p class="p-2">
+      View information about validated charts: <a href="validated?_format=html" rel="noopener" target="_blank">/validated</a>
+    </p>
+  </div><!-- .container-fluid -->
+
+  <script src="ui/jquery/dist/jquery.min.js"></script>
+  <script src="ui/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="ui/lodash/lodash.min.js"></script>
+  <script src="ui/g1/dist/g1.min.js"></script>
+  <!-- Commonly used libraries:
+  <script src="ui/d3v5/dist/d3.min.js"></script>
+  <script src="ui/morphdom/dist/morphdom-umd.min.js"></script>
+  <script src="ui/moment/min/moment-with-locales.min.js"></script>
+  <script src="ui/daterangepicker/daterangepicker.js"></script>
+  <script src="ui/leaflet/dist/leaflet.js"></script>
+  <script src="ui/topojson/dist/topojson.min.js"></script>
+
+  - add hotkeys to go to next chart
+  - any keystroke should update the validation label
+  -->
+  <script>
+    var chartid
+    fetch('onechart')
+      .then(response => response.json())
+      .then(function(data) {
+        console.log(data)
+        chartid = data[0]['chart_id']
+        $('img').attr('src', data[0]['image'])
+        $('.mylabel').html(data[0]['label'])
+        // sets value as the earlier label
+        $('input').attr('value', data[0]['label'])
+      })
+
+    $('#imageMetaForm').on('submit', function(e) {
+      e.preventDefault()
+      let data = $(this).serializeArray()
+      $.ajax({
+        method: "PUT", url: 'data',
+        success: function() {
+          location.reload()
+        },
+        data: {validated_label: data[0].value, is_validated: 1, chart_id: chartid}
+      })
+    })
+
+    $(function() {
+      fetch('uniq')
+        .then(response => response.json())
+        .then(function(data) {
+          data = _.map(data, 'label')
+          $.getJSON('chart_types.json').done(function(e) {
+            CHART_TYPES = e
+            $('body').template({CHART_TYPES: _.uniq([...data, ...CHART_TYPES])})
+          })
+      })
+    })
+  </script>
+</body>
+</html>

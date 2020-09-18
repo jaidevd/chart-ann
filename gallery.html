@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  <title>Annotated Gallery</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <div class="container-fluid py-4">
+    <h1 class="text-center text-muted">Annotated Gallery</h1>
+    <div class="card-deck">
+      <div class="card border-0">
+        <div class="card-body overflow-auto">
+          <div class="formhandler" data-src="data"></div>
+        </div><!-- .card-body -->
+      </div><!-- .card -->
+    </div><!-- .card -->
+    <p>
+      For instructions, view the <a href="https://docs.google.com/spreadsheets/d/1lEB3cTDC0sASvZvdQTMRYzTndSrUtHN48ry6oG0MoGY/edit#gid=864195404" target="_blank" rel="noopener">spreadsheet</a>.
+
+      Questions? Ask Bhanu or Jaidev.
+    </p>
+  </div><!-- .container-fluid -->
+
+  <script src="ui/jquery/dist/jquery.min.js"></script>
+  <script src="ui/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="ui/lodash/lodash.min.js"></script>
+  <script src="ui/g1/dist/g1.min.js"></script>
+  <!-- Commonly used libraries:
+  <script src="ui/d3v5/dist/d3.min.js"></script>
+  <script src="ui/morphdom/dist/morphdom-umd.min.js"></script>
+  <script src="ui/moment/min/moment-with-locales.min.js"></script>
+  <script src="ui/daterangepicker/daterangepicker.js"></script>
+  <script src="ui/leaflet/dist/leaflet.js"></script>
+  <script src="ui/topojson/dist/topojson.min.js"></script>
+  -->
+  <script>
+      $('.formhandler').formhandler({
+          // table: 'grid',
+          columns: [
+              {
+                  name: 'label'
+              },
+              {
+                  name: 'image',
+                  template: function(obj) {
+                      return `<td><img src="${obj.row.image}"></td>`
+                  }
+              }
+          ],
+          pageSize: 10
+      })
+//   $('#imageMetaForm').on('submit', function(e) {
+//     e.preventDefault();
+//     let data = $(this).serializeArray()
+//     let imageEnc = document.getElementById('my_canvas').toDataURL()
+//     $.ajax({
+//       method: "POST", url: 'data',
+//       success: function() {
+//         location.reload()
+//       },
+//       data: {label: data[0].value, image: imageEnc}
+//     })
+//   })
+  </script>
+</body>
+</html>

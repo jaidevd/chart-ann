@@ -13,6 +13,9 @@
   <div class="container-fluid py-4">
     <h1 class="text-center text-muted">Chart annotation - Validation</h1>
 
+    <p class="bg-warning lead p-3 round d-none">
+      Nothing to validate
+    </p>
     <div class="card-deck">
       <div class="card border-0">
         <div class="card-header bg-white d-flex justify-content-between">
@@ -76,12 +79,17 @@
     fetch('onechart')
       .then(response => response.json())
       .then(function(data) {
-        console.log(data)
-        chartid = data[0]['chart_id']
-        $('img').attr('src', data[0]['image'])
-        $('.mylabel').html(data[0]['label'])
-        // sets value as the earlier label
-        $('input').attr('value', data[0]['label'])
+        if(data.length !== 0) {
+          chartid = data[0]['chart_id']
+          $('img').attr('src', data[0]['image'])
+          $('.mylabel').html(data[0]['label'])
+          // sets value as the earlier label
+          $('input').attr('value', data[0]['label'])
+        } else {
+          $('input').attr('disabled', true)
+          $('button').attr('disabled', true)
+          $('p.d-none').removeClass('d-none')
+        }
       })
 
     $('#imageMetaForm').on('submit', function(e) {

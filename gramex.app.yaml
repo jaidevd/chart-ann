@@ -1,4 +1,10 @@
 url:
+  modelhandler:
+    pattern: /$YAMLURL/predictChart/
+    handler: chart_annotation.ChartAnnModelHandler
+    kwargs:
+      path: $YAMLPATH/models/four-class.h5
+      xsrf_cookies: false
   chart-gallery:
     pattern: /$YAMLURL/gallery
     handler: FileHandler

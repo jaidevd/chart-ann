@@ -57,6 +57,9 @@
     <p class="p-2">
       View information about validated charts: <a href="validated?_format=html" rel="noopener" target="_blank">/validated</a>
     </p>
+    <p class="p-2">
+      Revalidate the <a class="btn btn-link revalidate" href="javascript:void(0);">last chart</a>
+    </p>
   </div><!-- .container-fluid -->
 
   <script src="ui/jquery/dist/jquery.min.js"></script>
@@ -76,21 +79,32 @@
   -->
   <script>
     var chartid
-    fetch('onechart')
-      .then(response => response.json())
-      .then(function(data) {
-        if(data.length !== 0) {
-          chartid = data[0]['chart_id']
-          $('img').attr('src', data[0]['image'])
-          $('.mylabel').html(data[0]['label'])
-          // sets value as the earlier label
-          $('input').attr('value', data[0]['label'])
-        } else {
-          $('input').attr('disabled', true)
-          $('button').attr('disabled', true)
-          $('p.d-none').removeClass('d-none')
-        }
-      })
+    let revalidate
+
+    function fetch_chart(endpoint) {
+      fetch(endpoint)
+        .then(response => response.json())
+        .then(function(data) {
+          if(data.length !== 0) {
+            if(endpoint === 'onechart') {
+              chartid = data[0]['chart_id']
+              revalidate = parseInt(data[0]['chart_id']) - 1
+            } else {
+              chartid = revalidate
+            }
+            $('img').attr('src', data[0]['image'])
+            $('.mylabel').html(data[0]['label'])
+            // sets value as the earlier label
+            $('input').attr('value', data[0]['label'])
+          } else {
+            $('input').attr('disabled', true)
+            $('button').attr('disabled', true)
+            $('p.d-none').removeClass('d-none')
+          }
+        })
+    }
+
+    fetch_chart('onechart')
 
     $('#imageMetaForm').on('submit', function(e) {
       e.preventDefault()
@@ -102,6 +116,10 @@
         },
         data: {validated_label: data[0].value, is_validated: 1, chart_id: chartid}
       })
+    })
+
+    $('body').on('click', '.revalidate', function() {
+      fetch_chart(`revalidate?chart_id=${revalidate}`)
     })
 
     $(function() {

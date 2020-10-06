@@ -79,6 +79,13 @@ url:
       url: $DB_URL
       query: "SELECT * FROM charts WHERE is_validated=0 LIMIT 1"
       auth: *AUTHVARS
+  chart_annotation/revalidate-chart:
+    pattern: /$YAMLURL/revalidate
+    handler: FormHandler
+    kwargs:
+      url: $DB_URL
+      query: "SELECT * FROM charts WHERE chart_id={chart_id}"
+      auth: *AUTHVARS
   chart_annotation/validated:
     pattern: /$YAMLURL/validated
     handler: FormHandler

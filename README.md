@@ -20,6 +20,12 @@ Show chart and its original label.
 
 ## Setup
 
+### Dependencies
+- needs `charts.db`, a sqlite file with a `charts` table
+  - columns: `label`, `validated_label`, `image`, `chart_id`, `is_validated`
+
+### Instructions
+
 - [Install Gramex 1.x](https://learn.gramener.com/guide/install/)
 - Clone this repository
 - Copy assets from shared repo, e.g. `demo.gramener.com:/deploy/<user>/<repo>/`

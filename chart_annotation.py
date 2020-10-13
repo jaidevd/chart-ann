@@ -9,6 +9,7 @@ from skimage.io import imread
 from skimage.color import rgba2rgb
 from skimage.transform import resize
 import json
+import matplotlib.pyplot as plt
 op = os.path
 
 MODEL_CACHE = {
@@ -66,5 +67,13 @@ class ChartAnnModelHandler(ModelHandler):
         image = rgba2rgb(image)
         image = resize(image, (height, width), preserve_range=True)
         prediction = model.predict(image.reshape((1,) + image.shape)).ravel()
-        print(prediction)
         return json.dumps(LABEL_ENCODER[prediction.argmax()])
+
+
+def plot_history(history, show=False):
+    fig, ax = plt.subplots()
+    for k, v in history.history.items():
+        ax.plot(v, label=k)
+    plt.legend()
+    if show:
+        plt.show()

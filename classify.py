@@ -9,18 +9,23 @@ from skimage.io import imread
 from sklearn.preprocessing import LabelEncoder
 from tensorflow import keras
 from gramex.data import filter as gfilter
-
+from gramex.config import variables
 
 OP = os.path
-FOLDER = OP.abspath(OP.dirname(__file__))
+FOLDER = OP.dirname(__file__)
+
+# fetch the label
+charts = gfilter(variables['DB_URL'], table='charts')
+to_keep = charts['validated_label'].value_counts()[
+    charts['validated_label'].value_counts() > 21].index
+charts = charts[charts['validated_label'].isin(to_keep)]
 
 
-def classifier(handler, model_name, chart_db):
+def classifier(handler, model_name):
     """Classify a chart against a model.
     Args:
         handler (request object): gramex handler object
         model_name (str): model name to be loaded
-        chart_db (str): sqlite path to database
     Returns:
         (dict): prediction label
     """
@@ -38,12 +43,6 @@ def classifier(handler, model_name, chart_db):
     model_path = OP.join(FOLDER, 'assets', 'models', model_name)
     model = keras.models.load_model(model_path)
     predictions = model.predict(image)
-
-    # fetch the label
-    charts = gfilter(chart_db, table='charts')
-    to_keep = charts['validated_label'].value_counts()[
-        charts['validated_label'].value_counts() > 21].index
-    charts = charts[charts['validated_label'].isin(to_keep)]
 
     lenc = LabelEncoder()
     lenc.fit_transform(charts['validated_label'])

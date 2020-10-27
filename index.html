@@ -37,7 +37,6 @@
         </div><!-- .card-header -->
         <div class="card-body">
           <form class="form-inline" id="imageMetaForm">
-            <label for="chartType">What kind of a chart is this?</label>
             <template>
               <datalist id="chartList">
                 <% _.each(CHART_TYPES, function(chart) { %>
@@ -46,7 +45,13 @@
               </datalist>
             </template>
             <div class="form-group mr-sm-3">
-              <input class="form-control" type="text" list="chartList" name="chartClass">
+              <select class="form-control" name="chartClass" id="chartClass">
+                <template>
+                  <% _.each(_.sortBy(CHART_TYPES), function(chart) { %>
+                    <option value="<%=chart%>"><%= chart%></option>
+                  <%})%>
+                </template>
+              </select>
             </div>
             <button class="btn btn-primary" type="submit">Submit</button>
           </form>
@@ -56,7 +61,7 @@
     <p>
       For instructions, view the <a href="https://docs.google.com/spreadsheets/d/1lEB3cTDC0sASvZvdQTMRYzTndSrUtHN48ry6oG0MoGY/edit#gid=864195404" target="_blank" rel="noopener">spreadsheet</a>.
 
-      Questions? Ask Bhanu or Jaidev.
+      Questions? Ask <a href="mailto:bhanu.kamapantula@gramener.com?subject=Design2Code%20annotation" rel="noopener" target="_blank">Bhanu</a> or <a href="mailto:jaidev.deshpande@gramener.com?subject=Design2Code%20annotation" rel="noopener" target="_blank">Jaidev</a>.
     </p>
   </div><!-- .container-fluid -->
 
@@ -64,97 +69,6 @@
   <script src="ui/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
   <script src="ui/lodash/lodash.min.js"></script>
   <script src="ui/g1/dist/g1.min.js"></script>
-  <!-- Commonly used libraries:
-  <script src="ui/d3v5/dist/d3.min.js"></script>
-  <script src="ui/morphdom/dist/morphdom-umd.min.js"></script>
-  <script src="ui/moment/min/moment-with-locales.min.js"></script>
-  <script src="ui/daterangepicker/daterangepicker.js"></script>
-  <script src="ui/leaflet/dist/leaflet.js"></script>
-  <script src="ui/topojson/dist/topojson.min.js"></script>
-  -->
-  <script>
-    var CLIPBOARD = new CLIPBOARD_CLASS("my_canvas", true);
-    var CHART_TYPES = []
-
-    /**
-     * image pasting into canvas
-     *
-     * @param {string} canvas_id - canvas id
-     * @param {boolean} autoresize - if canvas will be resized
-     */
-    function CLIPBOARD_CLASS(canvas_id, autoresize) {
-      var _self = this;
-      var canvas = document.getElementById(canvas_id);
-      var ctx = document.getElementById(canvas_id).getContext("2d");
-
-      //handlers
-      document.addEventListener('paste', function (e) { _self.paste_auto(e); }, false);
-
-      //on paste
-      this.paste_auto = function (e) {
-        if (e.clipboardData) {
-          var items = e.clipboardData.items;
-          if (!items) return;
-
-          //access data directly
-          var is_image = false;
-          for (var i = 0; i < items.length; i++) {
-            if (items[i].type.indexOf("image") !== -1) {
-              //image
-              var blob = items[i].getAsFile();
-              var URLObj = window.URL || window.webkitURL;
-              var source = URLObj.createObjectURL(blob);
-              this.paste_createImage(source);
-              is_image = true;
-            }
-          }
-          if(is_image == true){
-            e.preventDefault();
-          }
-        }
-      };
-      //draw pasted image to canvas
-      this.paste_createImage = function (source) {
-        var pastedImage = new Image();
-        pastedImage.onload = function () {
-          if(autoresize == true){
-            //resize
-            canvas.width = pastedImage.width;
-            canvas.height = pastedImage.height;
-          }
-          else{
-            //clear canvas
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-          }
-          ctx.drawImage(pastedImage, 0, 0);
-        };
-        pastedImage.src = source;
-      };
-    }
-
-  $('#imageMetaForm').on('submit', function(e) {
-    e.preventDefault();
-    let data = $(this).serializeArray()
-    let imageEnc = document.getElementById('my_canvas').toDataURL()
-    $.ajax({
-      method: "POST", url: 'data',
-      success: function() {
-        location.reload()
-      },
-      data: {label: data[0].value, image: imageEnc}
-    })
-  })
-  $(function() {
-    fetch('uniq')
-      .then(response => response.json())
-      .then(function(data) {
-        data = _.map(data, 'label')
-        $.getJSON('chart_types.json').done(function(e) {
-          CHART_TYPES = e
-          $('body').template({CHART_TYPES: [...data, ...CHART_TYPES]})
-        })
-    })
-  })
-  </script>
+  <script src="js/training.js"></script>
 </body>
 </html>

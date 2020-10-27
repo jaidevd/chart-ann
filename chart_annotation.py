@@ -77,3 +77,18 @@ def plot_history(history, show=False):
     plt.legend()
     if show:
         plt.show()
+
+
+def draw_grid(data, labels, size=6, figsize=(16, 16)):
+    nrows = ncols = size
+    fig, ax = plt.subplots(nrows=nrows, ncols=ncols, figsize=figsize)
+    for i in range(size):
+        for j in range(size):
+            c = i * size + j
+            try:
+                ax[i, j].imshow(data[c])
+                ax[i, j].axis('off')
+                ax[i, j].set_title(labels[c])
+            except IndexError:
+                pass
+    plt.tight_layout()

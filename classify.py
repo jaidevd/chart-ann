@@ -10,6 +10,7 @@ from sklearn.preprocessing import LabelEncoder
 from tensorflow import keras
 from gramex.data import filter as gfilter
 from gramex.config import variables
+import gramex.cache
 
 OP = os.path
 FOLDER = OP.dirname(__file__)
@@ -19,6 +20,8 @@ charts = gfilter(variables['DB_URL'], table='charts')
 to_keep = charts['validated_label'].value_counts()[
     charts['validated_label'].value_counts() > 21].index
 charts = charts[charts['validated_label'].isin(to_keep)]
+lenc = LabelEncoder()
+lenc.fit_transform(charts['validated_label'])
 
 
 def classifier(handler, model_name):
@@ -41,11 +44,8 @@ def classifier(handler, model_name):
 
     # load model and predict
     model_path = OP.join(FOLDER, 'assets', 'models', model_name)
-    model = keras.models.load_model(model_path)
+    model = gramex.cache.open(model_path, keras.models.load_model)
     predictions = model.predict(image)
 
-    lenc = LabelEncoder()
-    lenc.fit_transform(charts['validated_label'])
     labels = lenc.inverse_transform(predictions.argmax(axis=1))
-
     return {'label': labels}

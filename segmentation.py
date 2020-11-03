@@ -1,6 +1,11 @@
 import tensorflow as tf
-from skimage.color import rgba2rgb
+from skimage.measure import regionprops
+from tensorflow.keras.models import load_model
+from skimage.io import imread
+from skimage.measure import label
+import segmentation as seg
 import matplotlib.pyplot as plt
+from skimage.color import rgba2rgb
 from skimage.util.shape import view_as_windows
 from skimage.transform import resize
 import numpy as np
@@ -37,7 +42,7 @@ def plot_attention(image, prediction, windows_shape, prob_threshold=0.5, prob_al
     return mask
 
 
-def segment_image(x, model, blocksize=(224, 224), stepsize=None, plot=False, figsize=(12, 16),
+def segment_image(x, model, blocksize=(224, 224), stepsize=None, figsize=(12, 16),
                   prob_threshold=0.8, prob_alpha=0.5, cmap=plt.cm.Reds):
     x = rgba2rgb(x)
     x = _resize(x, blocksize)
@@ -51,6 +56,29 @@ def segment_image(x, model, blocksize=(224, 224), stepsize=None, plot=False, fig
             ix = i * block_width + j
             X[ix] = windows[i, j, 0]
     win_pred = tf.nn.softmax(model.predict(X, batch_size=32), axis=1)
-    if plot:
-        mask = plot_attention(x, win_pred, windows.shape[:2], prob_threshold, prob_alpha, cmap)
+    mask = plot_attention(x, win_pred, windows.shape[:2], prob_threshold, prob_alpha, cmap)
     return win_pred, mask
+
+
+def get_bboxes(image, model):
+    pred, mask = seg.segment_image(
+        image, model, blocksize=(224, 224),
+        prob_threshold=0.66, prob_alpha=0.5, cmap=plt.cm.viridis)
+    rp = regionprops(mask.astype(int))
+    mask = mask.astype(bool)
+    labeled = label(mask)
+    rp = regionprops(labeled)
+
+    for region in rp:
+        minrow, mincol, maxrow, maxcol = region.bbox
+        plt.hlines(minrow, mincol, maxcol)
+        plt.hlines(maxrow, mincol, maxcol)
+        plt.vlines(mincol, minrow, maxrow)
+        plt.vlines(maxcol, minrow, maxrow)
+    plt.show()
+
+
+if __name__ == "__main__":
+    vgg = load_model('vgg16-validated-five-classes.h5')
+    x = imread('/tmp/medistrava.png')
+    get_bboxes(x, vgg)

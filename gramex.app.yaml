@@ -20,6 +20,21 @@ url:
         # Keep max-age small (in case we log out & log in as another user.)
         Cache-Control: private, max-age=1
     cache: {expiry: {duration: 1}}
+  labelstudio/home:
+    pattern: /$YAMLURL/labelstudio/(\d+)
+    handler: FileHandler
+    kwargs:
+      path: $YAMLPATH/labelstudio.html
+      template: true
+      auth: *AUTHVARS
+  labelstudio/update:
+    pattern: /$YAMLURL/updateLabel/(\d+)
+    handler: FunctionHandler
+    kwargs:
+      function: chart_annotation.update_label
+      xsrf_cookies: false
+      methods: [PUT, POST, GET, DELETE]
+      auth: *AUTHVARS
   chart_annotation-home:
     pattern: /$YAMLURL/
     handler: FileHandler

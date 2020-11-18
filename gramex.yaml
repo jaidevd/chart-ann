@@ -5,6 +5,7 @@
 # ----------------------------------------------------------------------------
 variables:
   DB_URL: sqlite:///$YAMLPATH/charts.db
+  COARSE_LABELS: sqlite:///$YAMLPATH/data/charts_coarse.db
 
 # Notify testers what user ID and password to use
 test:

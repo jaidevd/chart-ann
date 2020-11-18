@@ -1,5 +1,5 @@
 from base64 import urlsafe_b64decode, decodebytes
-from gramex.data import filter as gfilter
+from gramex import data as gdata
 from gramex.config import variables
 from gramex.handlers import ModelHandler
 import os
@@ -28,7 +28,9 @@ def _cache_model(path):
 def view(handler):
     handler.set_header('Content-Type', 'image/png')
     handler.set_header('Content-Disposition', 'attachment; filename=image.png')
-    data = gfilter(variables['DB_URL'], table='charts', args={'chart_id': [handler.path_args[0]]})
+    data = gdata.filter(
+        variables['COARSE_LABELS'], table='charts',
+        args={'chart_id': [handler.path_args[0]]})
     url = data.iloc[0]['image'].split(',')[1]
     data = urlsafe_b64decode(url)
     return data
@@ -92,3 +94,20 @@ def draw_grid(data, labels, size=6, figsize=(16, 16)):
             except IndexError:
                 pass
     plt.tight_layout()
+
+
+def get_labels():
+    data = gdata.filter(variables['COARSE_LABELS'], table='charts', args={'_c': ['parent_label']})
+    return data['parent_label'].unique()
+
+
+def update_label(handler):
+    annotations = json.loads(handler.request.body.decode('utf8'))
+    for annotation in annotations:
+        value = annotation.pop('value')
+        for key in 'x y width height'.split():
+            annotation[key] = value[key]
+        annotation['label'] = value['rectanglelabels'][0]
+        annotation['chart_id'] = int(handler.path_args[0])
+    [k.update({'user': handler.current_user.email}) for k in annotations]
+    gdata.update(variables['COARSE_LABELS'], table="annotations", id="chart_id", args=annotations)

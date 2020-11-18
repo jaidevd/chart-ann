@@ -108,6 +108,14 @@ url:
       url: $DB_URL
       query: "SELECT label, validated_label, is_validated FROM charts WHERE is_validated=1"
       auth: *AUTHVARS
+  chart_annotation/completions:
+    pattern: /$YAMLURL/completions/(\d+)
+    handler: FormHandler
+    kwargs:
+      url: $COARSE_LABELS
+      query: "SELECT * FROM annotations WHERE chart_id={_0}"
+      auth: *AUTHVARS
+      modify: chart_annotation.modify_completions
   chart_annotation/login/google:
     pattern: /$YAMLURL/google   # Map this URL
     handler: GoogleAuth         # to the GoogleAuth handler

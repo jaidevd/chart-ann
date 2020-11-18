@@ -1,5 +1,6 @@
 from base64 import urlsafe_b64decode, decodebytes
 from gramex import data as gdata
+import gramex.cache
 from gramex.config import variables
 from gramex.handlers import ModelHandler
 import os
@@ -9,7 +10,13 @@ from skimage.io import imread
 from skimage.color import rgba2rgb
 from skimage.transform import resize
 import json
+from sqlalchemy import create_engine
 import matplotlib.pyplot as plt
+import pandas as pd
+from skimage.measure import regionprops
+from skimage.measure import label
+import segmentation as seg
+
 op = os.path
 
 MODEL_CACHE = {
@@ -72,6 +79,34 @@ class ChartAnnModelHandler(ModelHandler):
         return json.dumps(LABEL_ENCODER[prediction.argmax()])
 
 
+def populate_annotations():
+    vgg = _cache_model('vgg16-validated-five-classes.h5')
+    """
+    TODO
+
+    1. for each row in charts table
+    2. get the image
+    3. update x, y, height, width columns in annotations table
+    """
+    df = gdata.filter(
+            variables['COARSE_LABELS'], table='charts')
+    for _, row in df.iterrows():
+        # x = imread('/tmp/medistrava.png')
+        x = imread(BytesIO(row['image'].split(',')[1]))
+        pred, mask = seg.segment_image(
+            x, vgg, blocksize=(224, 224), plot=False)
+    rp = regionprops(mask.astype(int))
+    mask = mask.astype(bool)
+    labeled = label(mask)
+    rp = regionprops(labeled)
+
+    for region in rp:
+        minrow, mincol, maxrow, maxcol = region.bbox
+    """
+    TODO: ...
+    """
+
+
 def plot_history(history, show=False):
     fig, ax = plt.subplots()
     for k, v in history.history.items():
@@ -96,12 +131,46 @@ def draw_grid(data, labels, size=6, figsize=(16, 16)):
     plt.tight_layout()
 
 
+engine = create_engine(variables['COARSE_LABELS'])
+
+
 def get_labels():
-    data = gdata.filter(variables['COARSE_LABELS'], table='charts', args={'_c': ['parent_label']})
+    data = gramex.cache.query(
+            "SELECT DISTINCT parent_label FROM charts",
+            engine, state='SELECT COUNT(*) FROM charts')
     return data['parent_label'].unique()
 
 
+def modify_completions(data, handler, args):
+    """"""
+    ignore_cols = ['original_width', 'original_height']
+    results = []
+    for _, row in data.iterrows():
+        results.append({
+            "value": {
+                "x": row.x,
+                "y": row.y,
+                "width": row.width,
+                "height": row.height,
+                "rotation": 0,
+                "rectanglelabels": [
+                  row.label
+                ]
+            },
+            "id": row.annotation_id,
+            "from_name": "tag",
+            "to_name": "img",
+            "type": "rectanglelabels"
+            }
+        )
+    return json.dumps(results)
+
+
 def update_label(handler):
+    """
+    pre-populated: update and delete options
+    user input: insert
+    """
     annotations = json.loads(handler.request.body.decode('utf8'))
     for annotation in annotations:
         value = annotation.pop('value')
@@ -109,5 +178,7 @@ def update_label(handler):
             annotation[key] = value[key]
         annotation['label'] = value['rectanglelabels'][0]
         annotation['chart_id'] = int(handler.path_args[0])
+        annotation['annotation_id'] = annotation.pop('id')
     [k.update({'user': handler.current_user.email}) for k in annotations]
-    gdata.update(variables['COARSE_LABELS'], table="annotations", id="chart_id", args=annotations)
+    df = pd.DataFrame.from_records(annotations)
+    gdata.update(variables['COARSE_LABELS'], table="annotations", id="chart_id", args=df.to_dict())

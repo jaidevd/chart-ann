@@ -1,0 +1,11 @@
+{
+  "name": "chart-ann",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "git@github.com:jaidevd/chart-ann.git",
+  "author": "bhanu.k <bhanu.kamapantula@gramener.com>",
+  "license": "MIT",
+  "dependencies": {
+    "label-studio": "0.8.0"
+  }
+}

@@ -18,6 +18,7 @@ from skimage.measure import label
 import segmentation as seg
 
 op = os.path
+engine = create_engine(variables['COARSE_LABELS'])
 
 MODEL_CACHE = {
     "_default": None
@@ -131,9 +132,6 @@ def draw_grid(data, labels, size=6, figsize=(16, 16)):
     plt.tight_layout()
 
 
-engine = create_engine(variables['COARSE_LABELS'])
-
-
 def get_labels():
     data = gramex.cache.query(
             "SELECT DISTINCT parent_label FROM charts",
@@ -146,6 +144,7 @@ def modify_completions(data, handler, args):
     ignore_cols = ['original_width', 'original_height']
     results = []
     for _, row in data.iterrows():
+        print(row)
         results.append({
             "value": {
                 "x": row.x,
@@ -171,14 +170,39 @@ def update_label(handler):
     pre-populated: update and delete options
     user input: insert
     """
+    chart_id = handler.path_args[0]
+    data = gramex.cache.query(
+            "SELECT annotation_id FROM annotations WHERE chart_id={}".format(chart_id),
+            engine, state='SELECT COUNT(*) FROM annotations')['annotation_id'].tolist()
+
     annotations = json.loads(handler.request.body.decode('utf8'))
+    chart_ids = [item['id'] for item in annotations]
+
+    # add incoming annotation that doesn't exist already
+    to_delete = set(data) - set(chart_ids)
+    [data.remove(k) for k in to_delete]
+    # intersection operation
+    to_update = set(data) & set(chart_ids)
+    # add incoming annotation that doesn't exist already
+    to_insert = set(chart_ids) - set(data)
+
     for annotation in annotations:
         value = annotation.pop('value')
         for key in 'x y width height'.split():
             annotation[key] = value[key]
         annotation['label'] = value['rectanglelabels'][0]
-        annotation['chart_id'] = int(handler.path_args[0])
+        annotation['chart_id'] = int(chart_id)
         annotation['annotation_id'] = annotation.pop('id')
     [k.update({'user': handler.current_user.email}) for k in annotations]
+
     df = pd.DataFrame.from_records(annotations)
-    gdata.update(variables['COARSE_LABELS'], table="annotations", id="chart_id", args=df.to_dict())
+    # to_delete
+    gdata.delete(variables['COARSE_LABELS'], table="annotations", id="annotation_id", args={'annotation_id': list(to_delete)})
+
+    # to update
+    for _id in to_update:
+        args = df[df['annotation_id'] == _id]
+        gdata.update(variables['COARSE_LABELS'], table="annotations", id="annotation_id", args=args.to_dict(orient='list'))
+
+    args = df[df['annotation_id'].isin(to_insert)]
+    gdata.insert(variables['COARSE_LABELS'], table="annotations", id="annotation_id", args=args.to_dict(orient='list'))

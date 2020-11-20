@@ -34,8 +34,9 @@
 
   $.ajax(`../completions/${chart_id}`, {
     success: function(res) {
+      completions.push({result: []})
       _.each(res, function(item) {
-        completions.push({result: [item]})
+        completions[0].result.push(item)
       })
       var labelStudio = new LabelStudio('label-studio', {
         config: `

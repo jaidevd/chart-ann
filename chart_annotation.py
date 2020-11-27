@@ -11,6 +11,7 @@ from skimage.color import rgba2rgb
 from skimage.transform import resize
 import json
 from sqlalchemy import create_engine
+from sqlalchemy.exc import ArgumentError
 import matplotlib.pyplot as plt
 import pandas as pd
 from skimage.measure import regionprops
@@ -18,7 +19,10 @@ from skimage.measure import label
 import segmentation as seg
 
 op = os.path
-engine = create_engine(variables['COARSE_LABELS'])
+try:
+    engine = create_engine(variables['COARSE_LABELS'])
+except ArgumentError:
+    pass
 
 MODEL_CACHE = {
     "_default": None
@@ -141,10 +145,9 @@ def get_labels():
 
 def modify_completions(data, handler, args):
     """"""
-    ignore_cols = ['original_width', 'original_height']
+    # ignore_cols = ['original_width', 'original_height']
     results = []
     for _, row in data.iterrows():
-        print(row)
         results.append({
             "value": {
                 "x": row.x,
@@ -197,12 +200,15 @@ def update_label(handler):
 
     df = pd.DataFrame.from_records(annotations)
     # to_delete
-    gdata.delete(variables['COARSE_LABELS'], table="annotations", id="annotation_id", args={'annotation_id': list(to_delete)})
+    gdata.delete(variables['COARSE_LABELS'], table="annotations",
+                 id="annotation_id", args={'annotation_id': list(to_delete)})
 
     # to update
     for _id in to_update:
         args = df[df['annotation_id'] == _id]
-        gdata.update(variables['COARSE_LABELS'], table="annotations", id="annotation_id", args=args.to_dict(orient='list'))
+        gdata.update(variables['COARSE_LABELS'], table="annotations", id="annotation_id",
+                     args=args.to_dict(orient='list'))
 
     args = df[df['annotation_id'].isin(to_insert)]
-    gdata.insert(variables['COARSE_LABELS'], table="annotations", id="annotation_id", args=args.to_dict(orient='list'))
+    gdata.insert(variables['COARSE_LABELS'], table="annotations", id="annotation_id",
+                 args=args.to_dict(orient='list'))

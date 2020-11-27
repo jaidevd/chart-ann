@@ -1,14 +1,21 @@
 import tensorflow as tf
+from base64 import decodebytes
+from io import BytesIO
 from skimage.measure import regionprops
 from tensorflow.keras.models import load_model
 from skimage.io import imread
-from skimage.measure import label
-import segmentation as seg
+# import segmentation as seg
 import matplotlib.pyplot as plt
 from skimage.color import rgba2rgb
 from skimage.util.shape import view_as_windows
 from skimage.transform import resize
 import numpy as np
+
+
+def img_from_b64(s):
+    s = s.split(',')[1]
+    bytedata = decodebytes(s.encode())
+    return imread(BytesIO(bytedata))
 
 
 def _resize(x, blocksize=(224, 224)):
@@ -42,9 +49,12 @@ def plot_attention(image, prediction, windows_shape, prob_threshold=0.5, prob_al
     return mask
 
 
-def segment_image(x, model, blocksize=(224, 224), stepsize=None, figsize=(12, 16),
+def segment_image(x, model, blocksize=(224, 224), stepsize=None, plot=False, figsize=(12, 16),
                   prob_threshold=0.8, prob_alpha=0.5, cmap=plt.cm.Reds):
-    x = rgba2rgb(x)
+    """Blockify an image via sliding windoes, and run the model on each window.
+    Collapse the results into an (height, width, n_classes) shaped matrix."""
+    if x.shape[-1] == 4:
+        x = rgba2rgb(x)
     x = _resize(x, blocksize)
     if not stepsize:
         stepsize = blocksize[0] // 4
@@ -56,26 +66,49 @@ def segment_image(x, model, blocksize=(224, 224), stepsize=None, figsize=(12, 16
             ix = i * block_width + j
             X[ix] = windows[i, j, 0]
     win_pred = tf.nn.softmax(model.predict(X, batch_size=32), axis=1)
-    mask = plot_attention(x, win_pred, windows.shape[:2], prob_threshold, prob_alpha, cmap)
-    return win_pred, mask
+    if plot:
+        plot_attention(x, win_pred, windows.shape[:2], prob_threshold, prob_alpha, cmap)
+    return tf.reshape(win_pred, (block_height, block_width, win_pred.shape[-1]))
 
 
-def get_bboxes(image, model):
-    pred, mask = seg.segment_image(
-        image, model, blocksize=(224, 224),
-        prob_threshold=0.66, prob_alpha=0.5, cmap=plt.cm.viridis)
-    rp = regionprops(mask.astype(int))
-    mask = mask.astype(bool)
-    labeled = label(mask)
-    rp = regionprops(labeled)
+def get_bboxes(probmap, threshold=0.5, plot=False):
+    bbox = []
+    mask = (probmap > threshold).numpy().astype(int)
+    for i in range(mask.shape[-1]):
+        rp = regionprops(mask[..., i])
+        class_box = []
+        for region in rp:
+            class_box.append(region.bbox)
+            if plot:
+                minrow, mincol, maxrow, maxcol = region.bbox
+                plt.hlines(minrow, mincol, maxcol)
+                plt.hlines(maxrow, mincol, maxcol)
+                plt.vlines(mincol, minrow, maxrow)
+                plt.vlines(maxcol, minrow, maxrow)
+        bbox.append(class_box)
+        if plot:
+            plt.show()
+    return bbox
 
-    for region in rp:
-        minrow, mincol, maxrow, maxcol = region.bbox
-        plt.hlines(minrow, mincol, maxcol)
-        plt.hlines(maxrow, mincol, maxcol)
-        plt.vlines(mincol, minrow, maxrow)
-        plt.vlines(maxcol, minrow, maxrow)
-    plt.show()
+
+def get_pre_annotations(x, model):
+    payload = []
+    x = img_from_b64(x)
+    prob = segment_image(x, model)
+    height, width = prob.shape[:2]
+    for i, chart_class in enumerate(get_bboxes(prob)):
+        if len(chart_class) > 0:
+            for instance in chart_class:
+                minrow, mincol, maxrow, maxcol = instance
+                payload.append({
+                    'label': i,
+                    'x': mincol / width * 100, 'y': minrow / height * 100,
+                    'height': (maxrow - minrow) / height * 100,
+                    'width': (maxcol - mincol) / width * 100,
+                    'original_width': x.shape[1],
+                    'original_height': x.shape[0]
+                })
+    return payload
 
 
 if __name__ == "__main__":

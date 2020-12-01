@@ -1,4 +1,9 @@
 url:
+  capture:
+    pattern: /$YAMLURL/screenshot
+    handler: FunctionHandler
+    kwargs:
+      function: chart_annotation.process_screenshot
   modelhandler:
     pattern: /$YAMLURL/predictChart/
     handler: chart_annotation.ChartAnnModelHandler
@@ -75,6 +80,12 @@ url:
     handler: FunctionHandler
     kwargs:
       function: chart_annotation.view
+      auth: *AUTHVARS
+  chart_annotation/view-pages:
+    pattern: /$YAMLURL/urlann/(.*)
+    handler: FunctionHandler
+    kwargs:
+      function: chart_annotation.view_page
       auth: *AUTHVARS
   chart_annotation/unique-chart-names:
     pattern: /$YAMLURL/uniq

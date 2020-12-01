@@ -1,8 +1,9 @@
-from base64 import urlsafe_b64decode, decodebytes
+from base64 import urlsafe_b64decode, decodebytes, urlsafe_b64encode
 from gramex import data as gdata
 import gramex.cache
 from gramex.config import variables
-from gramex.handlers import ModelHandler
+from gramex.handlers import ModelHandler, Capture
+from gramex import service
 import os
 from tensorflow.keras.models import load_model
 from io import BytesIO
@@ -17,6 +18,7 @@ import pandas as pd
 from skimage.measure import regionprops
 from skimage.measure import label
 import segmentation as seg
+from tornado.gen import coroutine, Return
 
 op = os.path
 try:
@@ -24,6 +26,7 @@ try:
 except ArgumentError:
     pass
 
+capture = Capture(engine='chrome')
 MODEL_CACHE = {
     "_default": None
 }
@@ -37,15 +40,18 @@ def _cache_model(path):
     return MODEL_CACHE['_default']
 
 
-def view(handler):
+def view(handler, table="charts"):
     handler.set_header('Content-Type', 'image/png')
     handler.set_header('Content-Disposition', 'attachment; filename=image.png')
     data = gdata.filter(
-        variables['COARSE_LABELS'], table='charts',
+        variables['COARSE_LABELS'], table=table,
         args={'chart_id': [handler.path_args[0]]})
     url = data.iloc[0]['image'].split(',')[1]
     data = urlsafe_b64decode(url)
     return data
+
+
+view_page = lambda handler: view(handler, 'pages')  # NOQA: E731
 
 
 class ChartAnnModelHandler(ModelHandler):
@@ -212,3 +218,20 @@ def update_label(handler):
     args = df[df['annotation_id'].isin(to_insert)]
     gdata.insert(variables['COARSE_LABELS'], table="annotations", id="annotation_id",
                  args=args.to_dict(orient='list'))
+
+
+@coroutine
+def process_screenshot(handler):
+    model = _cache_model('vgg16-validated-five-classes.h5')
+    content = capture.png(handler.get_arg('url'))
+    image = imread(BytesIO(content))
+    annotation = yield service.threadpool.submit(seg.get_pre_annotations, image, model)
+    meta = {}
+    gramex.data.insert(
+        variables['COARSE_LABELS'], table='pages', id='id', meta=meta,
+        args={
+            'image': ['data:image/png;base64,' + urlsafe_b64encode(content).decode('utf8')],
+            'url': [handler.get_arg('url')],
+        }
+    )
+    raise Return(json.dumps(dict(annotation=annotation, meta=meta)))

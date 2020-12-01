@@ -2,6 +2,7 @@ import tensorflow as tf
 from base64 import decodebytes
 from io import BytesIO
 from skimage.measure import regionprops
+from skimage.measure import label
 from tensorflow.keras.models import load_model
 from skimage.io import imread
 # import segmentation as seg
@@ -10,6 +11,8 @@ from skimage.color import rgba2rgb
 from skimage.util.shape import view_as_windows
 from skimage.transform import resize
 import numpy as np
+
+COARSE_LENC = ['barchart', 'donut', 'map', 'multiline', 'scatterplot']
 
 
 def img_from_b64(s):
@@ -49,7 +52,7 @@ def plot_attention(image, prediction, windows_shape, prob_threshold=0.5, prob_al
     return mask
 
 
-def segment_image(x, model, blocksize=(224, 224), stepsize=None, plot=False, figsize=(12, 16),
+def segment_image(x, model, blocksize=(224, 224), stepsize=None, plot=False, fvgsize=(12, 16),
                   prob_threshold=0.8, prob_alpha=0.5, cmap=plt.cm.Reds):
     """Blockify an image via sliding windoes, and run the model on each window.
     Collapse the results into an (height, width, n_classes) shaped matrix."""
@@ -67,15 +70,15 @@ def segment_image(x, model, blocksize=(224, 224), stepsize=None, plot=False, fig
             X[ix] = windows[i, j, 0]
     win_pred = tf.nn.softmax(model.predict(X, batch_size=32), axis=1)
     if plot:
-        plot_attention(x, win_pred, windows.shape[:2], prob_threshold, prob_alpha, cmap)
+        plot_attention(x, win_pred, windows.shape[:2], prob_threshold, prob_alpha, cmap, show=True)
     return tf.reshape(win_pred, (block_height, block_width, win_pred.shape[-1]))
 
 
-def get_bboxes(probmap, threshold=0.5, plot=False):
+def get_bboxes(probmap, threshold=0.7, plot=False):
     bbox = []
     mask = (probmap > threshold).numpy().astype(int)
     for i in range(mask.shape[-1]):
-        rp = regionprops(mask[..., i])
+        rp = regionprops(label(mask[..., i]))
         class_box = []
         for region in rp:
             class_box.append(region.bbox)
@@ -91,17 +94,18 @@ def get_bboxes(probmap, threshold=0.5, plot=False):
     return bbox
 
 
-def get_pre_annotations(x, model):
+def get_pre_annotations(x, model, bbox_threshold=0.7, plot=False):
     payload = []
-    x = img_from_b64(x)
+    if not isinstance(x, np.ndarray):
+        x = img_from_b64(x)
     prob = segment_image(x, model)
     height, width = prob.shape[:2]
-    for i, chart_class in enumerate(get_bboxes(prob)):
+    for i, chart_class in enumerate(get_bboxes(prob, bbox_threshold, plot=plot)):
         if len(chart_class) > 0:
             for instance in chart_class:
                 minrow, mincol, maxrow, maxcol = instance
                 payload.append({
-                    'label': i,
+                    'label': COARSE_LENC[i],
                     'x': mincol / width * 100, 'y': minrow / height * 100,
                     'height': (maxrow - minrow) / height * 100,
                     'width': (maxcol - mincol) / width * 100,

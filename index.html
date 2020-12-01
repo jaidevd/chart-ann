@@ -7,6 +7,7 @@
   <title>Chart Annotation</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="style.css">
+  <link href="node_modules/label-studio/build/static/css/main.css" rel="stylesheet">
 </head>
 
 <body>
@@ -25,6 +26,10 @@
           <div class="d-flex align-items-center small">
           </div>
         </div><!-- .card-header -->
+        <form id="chartForm">
+          <input type="url" class="form-control" id="chartUrl">
+          <button type="submit" class="btn btn-primary form-control">Submit</button>
+        </form>
         <div class="card-body overflow-auto">
           <canvas class="shadow border-0" style="border:1px solid grey;" id="my_canvas" width="300" height="300"></canvas>
         </div><!-- .card-body -->
@@ -53,6 +58,7 @@
         </div><!-- .card-body -->
       </div><!-- .card -->
     </div><!-- .card -->
+    <div id="label-studio"></div>
     <p>
       For instructions, view the <a href="https://docs.google.com/spreadsheets/d/1lEB3cTDC0sASvZvdQTMRYzTndSrUtHN48ry6oG0MoGY/edit#gid=864195404" target="_blank" rel="noopener">spreadsheet</a>.
 
@@ -64,6 +70,8 @@
   <script src="ui/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
   <script src="ui/lodash/lodash.min.js"></script>
   <script src="ui/g1/dist/g1.min.js"></script>
+  <script src="node_modules/label-studio/build/static/js/main.js"></script>
+  <script src="js/labelstudio.js"></script>
   <!-- Commonly used libraries:
   <script src="ui/d3v5/dist/d3.min.js"></script>
   <script src="ui/morphdom/dist/morphdom-umd.min.js"></script>
@@ -155,6 +163,16 @@
         })
     })
   })
+$('#chartForm').on('submit', function(e) {
+  e.preventDefault()
+  $.getJSON('screenshot?url=' + encodeURI($('#chartUrl').val())).done(
+    function(response) {
+      var {annotations, meta} = response
+      render_labelstudio(annotations, meta,
+        "{{ handler.current_user.given_name }}", "{{ handler.current_user.family_name }}")
+    }
+  )
+})
   </script>
 </body>
 </html>

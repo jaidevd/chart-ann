@@ -167,8 +167,9 @@ $('#chartForm').on('submit', function(e) {
   e.preventDefault()
   $.getJSON('screenshot?url=' + encodeURI($('#chartUrl').val())).done(
     function(response) {
-      var {annotations, meta} = response
-      render_labelstudio(annotations, meta,
+      var {annotation, meta} = response
+      console.log(annotation, meta)
+      render_labelstudio(annotation, meta,
         "{{ handler.current_user.given_name }}", "{{ handler.current_user.family_name }}")
     }
   )

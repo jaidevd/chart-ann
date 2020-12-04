@@ -11,6 +11,7 @@ from skimage.color import rgba2rgb
 from skimage.util.shape import view_as_windows
 from skimage.transform import resize
 import numpy as np
+from gramex.config import random_string
 
 COARSE_LENC = ['barchart', 'donut', 'map', 'multiline', 'scatterplot']
 
@@ -104,13 +105,28 @@ def get_pre_annotations(x, model, bbox_threshold=0.7, plot=False):
         if len(chart_class) > 0:
             for instance in chart_class:
                 minrow, mincol, maxrow, maxcol = instance
+                # payload.append({
+                #     'label': COARSE_LENC[i],
+                #     'x': mincol / width * 100, 'y': minrow / height * 100,
+                #     'height': (maxrow - minrow) / height * 100,
+                #     'width': (maxcol - mincol) / width * 100,
+                #     'original_width': x.shape[1],
+                #     'original_height': x.shape[0]
+                # })
                 payload.append({
-                    'label': COARSE_LENC[i],
-                    'x': mincol / width * 100, 'y': minrow / height * 100,
-                    'height': (maxrow - minrow) / height * 100,
-                    'width': (maxcol - mincol) / width * 100,
-                    'original_width': x.shape[1],
-                    'original_height': x.shape[0]
+                    "value": {
+                        "x": mincol / width * 100, 'y': minrow / height * 100,
+                        "width": (maxcol - mincol) / width * 100,
+                        "height": (maxrow - minrow) / height * 100,
+                        "rotation": 0,
+                        "rectanglelabels": [
+                          COARSE_LENC[i]
+                        ]
+                    },
+                    "id": random_string(6),
+                    "from_name": "tag",
+                    "to_name": "img",
+                    "type": "rectanglelabels"
                 })
     return payload
 

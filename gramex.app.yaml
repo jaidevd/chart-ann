@@ -1,4 +1,9 @@
 url:
+  capture:
+    pattern: /$YAMLURL/screenshot
+    handler: FunctionHandler
+    kwargs:
+      function: chart_annotation.process_screenshot
   modelhandler:
     pattern: /$YAMLURL/predictChart/
     handler: chart_annotation.ChartAnnModelHandler
@@ -20,6 +25,21 @@ url:
         # Keep max-age small (in case we log out & log in as another user.)
         Cache-Control: private, max-age=1
     cache: {expiry: {duration: 1}}
+  labelstudio/home:
+    pattern: /$YAMLURL/labelstudio/(\d+)
+    handler: FileHandler
+    kwargs:
+      path: $YAMLPATH/labelstudio.html
+      template: true
+      auth: *AUTHVARS
+  labelstudio/update:
+    pattern: /$YAMLURL/updateLabel/(\d+)
+    handler: FunctionHandler
+    kwargs:
+      function: chart_annotation.update_label
+      xsrf_cookies: false
+      methods: [PUT, POST, GET, DELETE]
+      auth: *AUTHVARS
   chart_annotation-home:
     pattern: /$YAMLURL/
     handler: FileHandler
@@ -55,11 +75,26 @@ url:
       id: chart_id
       xsrf_cookies: false
       auth: *AUTHVARS
+  chart-annotation/pages:
+    pattern: /$YAMLURL/pages
+    handler: FormHandler
+    kwargs:
+      url: $COARSE_LABELS
+      table: pages
+      id: page_id
+      xsrf_cookies: false
+      auth: *AUTHVARS
   chart_annotation/view-charts:
     pattern: /$YAMLURL/chart/(.*)
     handler: FunctionHandler
     kwargs:
       function: chart_annotation.view
+      auth: *AUTHVARS
+  chart_annotation/view-pages:
+    pattern: /$YAMLURL/urlann/(.*)
+    handler: FunctionHandler
+    kwargs:
+      function: chart_annotation.view_page
       auth: *AUTHVARS
   chart_annotation/unique-chart-names:
     pattern: /$YAMLURL/uniq
@@ -93,6 +128,14 @@ url:
       url: $DB_URL
       query: "SELECT label, validated_label, is_validated FROM charts WHERE is_validated=1"
       auth: *AUTHVARS
+  chart_annotation/completions:
+    pattern: /$YAMLURL/completions/(\d+)
+    handler: FormHandler
+    kwargs:
+      url: $COARSE_LABELS
+      query: "SELECT * FROM annotations WHERE chart_id={_0}"
+      auth: *AUTHVARS
+      modify: chart_annotation.modify_completions
   chart_annotation/login/google:
     pattern: /$YAMLURL/google   # Map this URL
     handler: GoogleAuth         # to the GoogleAuth handler

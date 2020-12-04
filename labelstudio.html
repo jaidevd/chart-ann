@@ -1,0 +1,96 @@
+<!-- Include Label Studio stylesheet -->
+{% from chart_annotation import get_labels %}
+
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  <title>LabelStudio</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../style.css">
+  <link href="../node_modules/label-studio/build/static/css/main.css" rel="stylesheet">
+</head>
+
+<body><div id="label-studio"></div></body>
+<script src="../ui/jquery/dist/jquery.min.js"></script>
+<script src="../ui/lodash/lodash.min.js"></script>
+<script src="../node_modules/label-studio/build/static/js/main.js"></script>
+
+<!-- Initialize Label Studio -->
+<script>
+  const chart_id = "{{ handler.path_args[0] }}"
+  var completions = []
+  var interfaces = [
+    "panel",
+    "update",
+    "controls",
+    "side-column",
+    "completions:menu",
+    "completions:add-new",
+    "completions:delete",
+    "predictions:menu",
+  ]
+
+  $.ajax(`../completions/${chart_id}`, {
+    success: function(res) {
+      completions.push({result: []})
+      _.each(res, function(item) {
+        completions[0].result.push(item)
+      })
+      var labelStudio = new LabelStudio('label-studio', {
+        config: `
+          <View>
+            <Image name="img" value="$image"></Image>
+            <RectangleLabels name="tag" toName="img">
+              {% for label in sorted(get_labels()) %}
+              <Label value="{{ label }}"></Label>
+            {% end %}
+          </RectangleLabels>
+        </View>
+      `,
+      interfaces: interfaces,
+      user: {
+        pk: 1,
+        firstName: "{{ handler.current_user.given_name }}",
+        lastName: "{{ handler.current_user.family_name }}"
+      },
+
+      task: {
+        completions: completions,
+        predictions: [],
+        id: 1,
+        data: {
+          image: `../chart/${chart_id}`
+        }
+      },
+
+      onLabelStudioLoad: function(LS) {
+        var c = LS.completionStore.addCompletion({
+          userGenerate: true
+        });
+        LS.completionStore.selectCompletion(c.id);
+      },
+
+      onSubmitCompletion: function(ls, completion) {
+        $.ajax({
+          url: `../updateLabel/${chart_id}`,
+          method: 'PUT',
+          data: JSON.stringify(completion.serializeCompletion()),
+          processData: false
+        })
+      },
+      onUpdateCompletion: function(ls, completion) {
+        $.ajax({
+          url: `../updateLabel/${chart_id}`,
+          method: 'PUT',
+          data: JSON.stringify(completion.serializeCompletion()),
+          processData: false
+        })
+      }
+    }); // labelStudio()
+    }, // success
+  }) // ajax
+
+  </script>
+</html>

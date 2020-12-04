@@ -102,7 +102,6 @@ def populate_annotations():
     df = gdata.filter(
             variables['COARSE_LABELS'], table='charts')
     for _, row in df.iterrows():
-        # x = imread('/tmp/medistrava.png')
         x = imread(BytesIO(row['image'].split(',')[1]))
         pred, mask = seg.segment_image(
             x, vgg, blocksize=(224, 224), plot=False)

@@ -75,6 +75,15 @@ url:
       id: chart_id
       xsrf_cookies: false
       auth: *AUTHVARS
+  chart-annotation/pages:
+    pattern: /$YAMLURL/pages
+    handler: FormHandler
+    kwargs:
+      url: $COARSE_LABELS
+      table: pages
+      id: page_id
+      xsrf_cookies: false
+      auth: *AUTHVARS
   chart_annotation/view-charts:
     pattern: /$YAMLURL/chart/(.*)
     handler: FunctionHandler

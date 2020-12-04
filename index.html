@@ -166,10 +166,10 @@
 $('#chartForm').on('submit', function(e) {
   let $icon = $('<i class="fa fa-spinner fa-2x fa-fw align-middle"></i>').appendTo(this)
   e.preventDefault()
-  $.getJSON('screenshot?url=' + encodeURI($('#chartUrl').val())).done(
+  let chart_url = $('#chartUrl').val()
+  $.getJSON('screenshot?url=' + encodeURI(chart_url)).done(
     function(response) {
       var {annotation, meta} = response
-      console.log(annotation, meta)
       render_labelstudio(annotation, meta,
         "{{ handler.current_user.given_name }}", "{{ handler.current_user.family_name }}")
       $icon.fadeOut()

@@ -98,14 +98,17 @@ const render_labelstudio = function(annotations, meta, firstName, lastName) {
       //     processData: false
       //   })
       // },
-      // onUpdateCompletion: function(ls, completion) {
-      //   $.ajax({
-      //     url: `../updateLabel/${chart_id}`,
-      //     method: 'PUT',
-      //     data: JSON.stringify(completion.serializeCompletion()),
-      //     processData: false
-      //   })
-      // }
+      onUpdateCompletion: function(ls, completion) {
+        console.log(completion.serializeCompletion())
+        $.ajax({
+          url: 'pages',
+          method: 'PUT',
+          data: {
+            page_id: chart_id,
+            annotations: JSON.stringify(completion.serializeCompletion())
+          }
+        })
+      }
     }
   )
 }

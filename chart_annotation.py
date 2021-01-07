@@ -40,18 +40,18 @@ def _cache_model(path):
     return MODEL_CACHE['_default']
 
 
-def view(handler, table="charts"):
+def view(handler, table="charts", pk="chart_id"):
     handler.set_header('Content-Type', 'image/png')
     handler.set_header('Content-Disposition', 'attachment; filename=image.png')
     data = gdata.filter(
         variables['COARSE_LABELS'], table=table,
-        args={'chart_id': [handler.path_args[0]]})
+        args={pk: [handler.path_args[0]]})
     url = data.iloc[0]['image'].split(',')[1]
     data = urlsafe_b64decode(url)
     return data
 
 
-view_page = lambda handler: view(handler, 'pages')  # NOQA: E731
+view_page = lambda handler: view(handler, 'pages', 'page_id')  # NOQA: E731
 
 
 class ChartAnnModelHandler(ModelHandler):

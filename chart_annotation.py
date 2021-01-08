@@ -19,6 +19,7 @@ from skimage.measure import regionprops
 from skimage.measure import label
 import segmentation as seg
 from tornado.gen import coroutine, Return
+from models import WindowObjectDetector
 
 op = os.path
 try:
@@ -221,7 +222,7 @@ def update_label(handler):
 
 @coroutine
 def process_screenshot(handler):
-    model = _cache_model('vgg16-validated-five-classes.h5')
+    model = WindowObjectDetector(_cache_model('vgg16-validated-five-classes.h5'))
     content = capture.png(handler.get_arg('url'))
     image = imread(BytesIO(content))
     annotation = yield service.threadpool.submit(seg.get_pre_annotations, image, model)

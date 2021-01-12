@@ -37,7 +37,7 @@ LABEL_ENCODER = ['barchart', 'scatterplot', 'treemap', 'choropleth']
 
 def _cache_model(path):
     if not MODEL_CACHE['_default']:
-        MODEL_CACHE['_default'] = load_model(path)
+        MODEL_CACHE['_default'] = WindowObjectDetector(load_model(path))
     return MODEL_CACHE['_default']
 
 
@@ -222,7 +222,7 @@ def update_label(handler):
 
 @coroutine
 def process_screenshot(handler):
-    model = WindowObjectDetector(_cache_model('vgg16-validated-five-classes.h5'))
+    model = _cache_model('vgg16-validated-five-classes.h5')
     content = capture.png(handler.get_arg('url'))
     image = imread(BytesIO(content))
     annotation = yield service.threadpool.submit(seg.get_pre_annotations, image, model)

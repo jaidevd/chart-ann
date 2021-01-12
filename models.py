@@ -5,7 +5,6 @@ from tensorflow_addons.image import connected_components
 import tensorflow as tf
 from skimage.io import imread
 from skimage.color import rgba2rgb
-from skimage.transform import resize
 
 
 class Windowing(Layer):
@@ -56,7 +55,6 @@ class WindowObjectDetector(Model):
         n_channels = inputs.shape[-1]
         _, block_height, block_width, _ = self.windowing.size
         patches = tf.reshape(patches, (batch * row * col, block_height, block_width, n_channels))
-        from ipdb import set_trace; set_trace()
         prob = tf.nn.softmax(self.base.predict(patches, *args, **kwargs), axis=1)
         prob = tf.reshape(prob, (row, col, prob.shape[-1]))
         mask = prob > self.bbox_threshold
@@ -70,10 +68,9 @@ class WindowObjectDetector(Model):
 
 if __name__ == "__main__":
     base = load_model('vgg16-validated-five-classes.h5')
-    model = WindowObjectDetector(base, bbox_threshold=0.5)
+    model = WindowObjectDetector(base, bbox_threshold=0.7)
 
-    x = imread('choropleth.png')
+    x = imread('/tmp/cap-choropleth.png')
     x = rgba2rgb(x)
-    x = resize(x, (2240, 1120))  # NOQA: E912
     x.shape = (1,) + x.shape
-    minrow, mincol, maxrow, maxcol = model.predict(x, batch_size=64)
+    prob = model.predict(x, batch_size=64)

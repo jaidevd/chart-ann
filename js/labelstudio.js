@@ -58,8 +58,8 @@ const lsConfig =
   `
 
 
-var completions = [{result: []}]
 const render_labelstudio = function(annotations, meta, firstName, lastName) {
+  let completions = [{result: []}]
   _.each(annotations, function(item) {completions[0].result.push(item)})
   let chart_id = meta.inserted[0].page_id
   return new LabelStudio('label-studio',

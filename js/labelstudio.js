@@ -20,6 +20,7 @@ const lsConfig =
               <Label value="treemap"></Label>
               <Label value="chord"></Label>
               <Label value="map"></Label>
+              <Label value="multiline"></Label>
               <Label value="dotmatrix"></Label>
               <Label value="bubblechartlegend"></Label>
               <Label value="funnel"></Label>

@@ -63,18 +63,16 @@ def get_pre_annotations(x, model, bbox_threshold=0.7, plot=False):
     if x.shape[-1] == 4:
         x = rgba2rgb(x)
     x.shape = (1,) + x.shape
-    prob = model.predict(x, batch_size=32)
-    height, width = prob.shape[:2]
-    mask = prob > bbox_threshold
-    for i, chart_class in enumerate(get_bboxes(mask, bbox_threshold, plot=plot)):
-        if len(chart_class) > 0:
-            for instance in chart_class:
-                minrow, mincol, maxrow, maxcol = instance
+    height, width, boxes = model.predict(x, batch_size=32)
+    for i, _boxes in enumerate(boxes):
+        if len(_boxes) > 0:
+            for instance in _boxes:
+                rowmin, colmin, rowmax, colmax = map(lambda x: x.numpy().item(), instance)
                 payload.append({
                     "value": {
-                        "x": mincol / width * 100, 'y': minrow / height * 100,
-                        "width": (maxcol - mincol) / width * 100,
-                        "height": (maxrow - minrow) / height * 100,
+                        "x": colmin / width * 100, 'y': rowmin / height * 100,
+                        "width": (colmax - colmin) / width * 100,
+                        "height": (rowmax - rowmin) / height * 100,
                         "rotation": 0,
                         "rectanglelabels": [
                           COARSE_LENC[i]

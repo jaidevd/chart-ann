@@ -20,6 +20,7 @@ const lsConfig =
               <Label value="treemap"></Label>
               <Label value="chord"></Label>
               <Label value="map"></Label>
+              <Label value="multiline"></Label>
               <Label value="dotmatrix"></Label>
               <Label value="bubblechartlegend"></Label>
               <Label value="funnel"></Label>
@@ -58,8 +59,8 @@ const lsConfig =
   `
 
 
-var completions = [{result: []}]
 const render_labelstudio = function(annotations, meta, firstName, lastName) {
+  let completions = [{result: []}]
   _.each(annotations, function(item) {completions[0].result.push(item)})
   let chart_id = meta.inserted[0].page_id
   return new LabelStudio('label-studio',

@@ -3,6 +3,10 @@
 
 # Configurations for app: chart_annotation
 # ----------------------------------------------------------------------------
+schedule:
+  load-model:
+    function: chart_annotation._cache_model('vgg16-validated-five-classes.h5')
+    startup: true
 variables:
   DB_URL: sqlite:///$YAMLPATH/charts.db
   COARSE_LABELS: sqlite:///$YAMLPATH/data/charts_coarse.db

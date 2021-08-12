@@ -8,63 +8,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="style.css">
   <link href="node_modules/label-studio/build/static/css/main.css" rel="stylesheet">
+  <link rel="stylesheet" href="ui/dropzone/dist/min/dropzone.min.css">
 </head>
 
 <body>
   <div class="container-fluid py-4">
-    <h1 class="text-center text-muted">Chart annotation</h1>
-
-    <p class="bg-warning lead p-3 round">
-      We received <code>>500</code> images for training the model from 37 projects! We're pausing the chart classification until further notice.
-
-      You can view the submitted images at <a class="alert-link" href="gallery">Gallery</a>.
-    </p>
-    <div class="card-deck">
-      <div class="card border-0">
-        <div class="card-header bg-white d-flex justify-content-between">
-          <h5 class="card-title my-0">Paste Chart image here</h5>
-          <div class="d-flex align-items-center small">
-          </div>
-        </div><!-- .card-header -->
-        <form id="chartForm">
-          <input type="url" class="form-control" id="chartUrl">
-          <button type="submit" class="btn btn-primary form-control">Submit</button>
-        </form>
-        <div class="card-body overflow-auto">
-          <canvas class="shadow border-0" style="border:1px solid grey;" id="my_canvas" width="300" height="300"></canvas>
-        </div><!-- .card-body -->
-      </div><!-- .card -->
-      <div class="card border-0">
-        <div class="card-header bg-white d-flex justify-content-between">
-          <h5 class="card-title my-0">Annotate the chart</h5>
-          <div class="d-flex align-items-center small">
-          </div>
-        </div><!-- .card-header -->
-        <div class="card-body">
-          <form class="form-inline" id="imageMetaForm">
-            <label for="chartType">What kind of a chart is this?</label>
-            <template>
-              <datalist id="chartList">
-                <% _.each(CHART_TYPES, function(chart) { %>
-                <option value="<%=chart%>"><%= chart%></option>
-                <%})%>
-              </datalist>
-            </template>
-            <div class="form-group mr-sm-3">
-              <input class="form-control" type="text" list="chartList" name="chartClass" disabled>
-            </div>
-            <button class="btn btn-primary" type="submit" disabled>Submit</button>
-          </form>
-        </div><!-- .card-body -->
-      </div><!-- .card -->
-    </div><!-- .card -->
-    <div id="label-studio"></div>
-    <p>
-      For instructions, view the <a href="https://docs.google.com/spreadsheets/d/1lEB3cTDC0sASvZvdQTMRYzTndSrUtHN48ry6oG0MoGY/edit#gid=864195404" target="_blank" rel="noopener">spreadsheet</a>.
-
-      Questions? Ask Bhanu or Jaidev.
-    </p>
-  </div><!-- .container-fluid -->
+    <div id="drop" class="btn btn-primary">Upload</div>
+    <div id="label-studio" class="pt-3"></div>
+  </div>
 
   <script src="ui/jquery/dist/jquery.min.js"></script>
   <script src="ui/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
@@ -72,6 +23,7 @@
   <script src="ui/g1/dist/g1.min.js"></script>
   <script src="node_modules/label-studio/build/static/js/main.js"></script>
   <script src="js/labelstudio.js"></script>
+  <script src="ui/dropzone/dist/min/dropzone.min.js"></script>
   <!-- Commonly used libraries:
   <script src="ui/d3v5/dist/d3.min.js"></script>
   <script src="ui/morphdom/dist/morphdom-umd.min.js"></script>
@@ -81,7 +33,20 @@
   <script src="ui/topojson/dist/topojson.min.js"></script>
   -->
   <script>
-    var CLIPBOARD = new CLIPBOARD_CLASS("my_canvas", true);
+    Dropzone.autoDiscover = false
+    $('#drop').dropzone({
+      url: '/screenshot',
+      clickable: true,
+      previewTemplate: '<div></div>',
+      init: function () {
+        this.on('success', function(file) {
+          let {annotation, meta} = JSON.parse(file.xhr.response)
+          render_labelstudio(annotation, meta,
+                             "Jaidev", "Deshpande")
+        })
+      }
+    })
+    // var CLIPBOARD = new CLIPBOARD_CLASS("my_canvas", true);
     var CHART_TYPES = []
 
     /**
@@ -90,55 +55,55 @@
      * @param {string} canvas_id - canvas id
      * @param {boolean} autoresize - if canvas will be resized
      */
-    function CLIPBOARD_CLASS(canvas_id, autoresize) {
-      var _self = this;
-      var canvas = document.getElementById(canvas_id);
-      var ctx = document.getElementById(canvas_id).getContext("2d");
+    // function CLIPBOARD_CLASS(canvas_id, autoresize) {
+    //   var _self = this;
+    //   var canvas = document.getElementById(canvas_id);
+    //   var ctx = document.getElementById(canvas_id).getContext("2d");
 
-      //handlers
-      document.addEventListener('paste', function (e) { _self.paste_auto(e); }, false);
+    //   //handlers
+    //   document.addEventListener('paste', function (e) { _self.paste_auto(e); }, false);
 
-      //on paste
-      this.paste_auto = function (e) {
-        if (e.clipboardData) {
-          var items = e.clipboardData.items;
-          if (!items) return;
+    //   //on paste
+    //   this.paste_auto = function (e) {
+    //     if (e.clipboardData) {
+    //       var items = e.clipboardData.items;
+    //       if (!items) return;
 
-          //access data directly
-          var is_image = false;
-          for (var i = 0; i < items.length; i++) {
-            if (items[i].type.indexOf("image") !== -1) {
-              //image
-              var blob = items[i].getAsFile();
-              var URLObj = window.URL || window.webkitURL;
-              var source = URLObj.createObjectURL(blob);
-              this.paste_createImage(source);
-              is_image = true;
-            }
-          }
-          if(is_image == true){
-            e.preventDefault();
-          }
-        }
-      };
-      //draw pasted image to canvas
-      this.paste_createImage = function (source) {
-        var pastedImage = new Image();
-        pastedImage.onload = function () {
-          if(autoresize == true){
-            //resize
-            canvas.width = pastedImage.width;
-            canvas.height = pastedImage.height;
-          }
-          else{
-            //clear canvas
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-          }
-          ctx.drawImage(pastedImage, 0, 0);
-        };
-        pastedImage.src = source;
-      };
-    }
+    //       //access data directly
+    //       var is_image = false;
+    //       for (var i = 0; i < items.length; i++) {
+    //         if (items[i].type.indexOf("image") !== -1) {
+    //           //image
+    //           var blob = items[i].getAsFile();
+    //           var URLObj = window.URL || window.webkitURL;
+    //           var source = URLObj.createObjectURL(blob);
+    //           this.paste_createImage(source);
+    //           is_image = true;
+    //         }
+    //       }
+    //       if(is_image == true){
+    //         e.preventDefault();
+    //       }
+    //     }
+    //   };
+    //   //draw pasted image to canvas
+    //   this.paste_createImage = function (source) {
+    //     var pastedImage = new Image();
+    //     pastedImage.onload = function () {
+    //       if(autoresize == true){
+    //         //resize
+    //         canvas.width = pastedImage.width;
+    //         canvas.height = pastedImage.height;
+    //       }
+    //       else{
+    //         //clear canvas
+    //         ctx.clearRect(0, 0, canvas.width, canvas.height);
+    //       }
+    //       ctx.drawImage(pastedImage, 0, 0);
+    //     };
+    //     pastedImage.src = source;
+    //   };
+    // }
 
   $('#imageMetaForm').on('submit', function(e) {
     e.preventDefault();
@@ -171,7 +136,7 @@ $('#chartForm').on('submit', function(e) {
     function(response) {
       var {annotation, meta} = response
       render_labelstudio(annotation, meta,
-        "{{ handler.current_user.given_name }}", "{{ handler.current_user.family_name }}")
+        "Jaidev", "Deshpande")
       $icon.fadeOut()
     }
   )

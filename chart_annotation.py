@@ -2,7 +2,7 @@ from base64 import urlsafe_b64decode, decodebytes, urlsafe_b64encode
 from gramex import data as gdata
 import gramex.cache
 from gramex.config import variables
-from gramex.handlers import ModelHandler, Capture
+from gramex.handlers import MLHandler, Capture
 from gramex import service
 import os
 from tensorflow.keras.models import load_model
@@ -55,7 +55,7 @@ def view(handler, table="charts", pk="chart_id"):
 view_page = lambda handler: view(handler, 'pages', 'page_id')  # NOQA: E731
 
 
-class ChartAnnModelHandler(ModelHandler):
+class ChartAnnModelHandler(MLHandler):
     """"""
     def prepare(self):
         self.set_header('Content-Type', 'application/json; charset=utf-8')
@@ -223,15 +223,19 @@ def update_label(handler):
 @coroutine
 def process_screenshot(handler):
     model = _cache_model('vgg16-validated-five-classes.h5')
-    content = capture.png(handler.get_arg('url'))
+    url = handler.get_arg('url', False)
+    if url:
+        content = capture.png(url)
+    else:
+        content = handler.request.files['file'][0]['body']
     image = imread(BytesIO(content))
     annotation = yield service.threadpool.submit(seg.get_pre_annotations, image, model)
     meta = {}
     gramex.data.insert(
-        variables['COARSE_LABELS'], table='pages', id='id', meta=meta,
+        variables['COARSE_LABELS'], table='pages', id='page_id', meta=meta,
         args={
             'image': ['data:image/png;base64,' + urlsafe_b64encode(content).decode('utf8')],
-            'url': [handler.get_arg('url')],
+            'url': [url if url else handler.request.files['file'][0]['filename']],
         }
     )
     raise Return(json.dumps(dict(annotation=annotation, meta=meta)))

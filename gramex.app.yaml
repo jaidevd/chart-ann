@@ -4,12 +4,6 @@ url:
     handler: FunctionHandler
     kwargs:
       function: chart_annotation.process_screenshot
-  modelhandler:
-    pattern: /$YAMLURL/predictChart/
-    handler: chart_annotation.ChartAnnModelHandler
-    kwargs:
-      path: $YAMLPATH/models/four-class.h5
-      xsrf_cookies: false
   chart-gallery:
     pattern: /$YAMLURL/gallery
     handler: FileHandler
@@ -96,17 +90,17 @@ url:
     kwargs:
       function: chart_annotation.view_page
       # auth: *AUTHVARS
-  chart_annotation/unique-chart-names:
-    pattern: /$YAMLURL/uniq
-    handler: FormHandler
-    kwargs:
-      url: $DB_URL
-      query: "SELECT DISTINCT(label) FROM charts"
-      # auth: *AUTHVARS
-      headers:
-        # cache for 1 day
-        Cache-Control: public, max-age=86400
-    cache: true
+    # chart_annotation/unique-chart-names:
+    #   pattern: /$YAMLURL/uniq
+    #   handler: FormHandler
+    #   kwargs:
+    #     url: $DB_URL
+    #     query: "SELECT DISTINCT(label) FROM charts"
+    #     # auth: *AUTHVARS
+    #     headers:
+    #       # cache for 1 day
+    #       Cache-Control: public, max-age=86400
+    #   cache: true
   chart_annotation/one-chart:
     pattern: /$YAMLURL/onechart
     handler: FormHandler

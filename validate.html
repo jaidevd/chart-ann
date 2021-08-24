@@ -127,10 +127,14 @@
         .then(response => response.json())
         .then(function(data) {
           data = _.map(data, 'label')
-          $.getJSON('chart_types.json').done(function(e) {
-            CHART_TYPES = e
-            $('body').template({CHART_TYPES: _.uniq([...data, ...CHART_TYPES])})
-          })
+          var CHART_TYPES = [
+            "barchart",
+            "donut",
+            "map",
+            "multiline",
+            "scatterplot"
+          ]
+          $('body').template({CHART_TYPES: _.uniq([...data, ...CHART_TYPES])})
       })
     })
   </script>

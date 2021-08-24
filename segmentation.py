@@ -4,14 +4,11 @@ from io import BytesIO
 from skimage.measure import regionprops
 from skimage.measure import label
 from tensorflow.keras.models import load_model
+from tensorflow.keras.applications.resnet50 import preprocess_input
 from skimage.io import imread
 # import segmentation as seg
 import matplotlib.pyplot as plt
-from skimage.color import rgba2rgb
-import numpy as np
-from gramex.config import random_string
-
-COARSE_LENC = ['barchart', 'donut', 'map', 'multiline', 'scatterplot']
+from gramex.config import random_string, variables
 
 
 def img_from_b64(s):
@@ -58,11 +55,8 @@ def get_bboxes(mask, threshold=0.7, plot=False):
 
 def get_pre_annotations(x, model, bbox_threshold=0.7, plot=False):
     payload = []
-    if not isinstance(x, np.ndarray):
-        x = img_from_b64(x)
-    if x.shape[-1] == 4:
-        x = rgba2rgb(x)
     x.shape = (1,) + x.shape
+    x = preprocess_input(x)
     height, width, boxes = model.predict(x, batch_size=32)
     for i, _boxes in enumerate(boxes):
         if len(_boxes) > 0:
@@ -75,7 +69,7 @@ def get_pre_annotations(x, model, bbox_threshold=0.7, plot=False):
                         "height": (rowmax - rowmin) / height * 100,
                         "rotation": 0,
                         "rectanglelabels": [
-                          COARSE_LENC[i]
+                          variables['LENC'][i]
                         ]
                     },
                     "id": random_string(6),

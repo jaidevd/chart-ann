@@ -20,12 +20,13 @@
       <div class="col-sm-2 input-group">
         <input type="text" class="form-control" id="imageURL" placeholder="Or Add Image URL">
         <div class="input-group-append">
-          <button class="btn btn-primary mb-2">Run</button>
+          <button id="urlrun" class="btn btn-primary mb-2">Run</button>
         </div>
       </div>
     </div>
     <div class="row"><div id="label-studio" class="pt-3"></div></div>
   </div>
+  <div id="loading" class="hidden overlay-white py-2 text-dark text-center"><p>Loading</p><br><i class="fa fa-spinner fa-spin fa-2x fa-fw align-middle"></i></div>
 
   <script src="ui/jquery/dist/jquery.min.js"></script>
   <script src="ui/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
@@ -49,42 +50,27 @@
       clickable: true,
       previewTemplate: '<div></div>',
       init: function () {
+        this.on('sending', function() {$('#loading').removeClass('hidden')})
         this.on('success', function(file) {
+          $('#loading').addClass('hidden')
           let {annotation, meta} = JSON.parse(file.xhr.response)
           render_labelstudio(annotation, meta,
                              "Jaidev", "Deshpande")
         })
       }
     })
-    var CHART_TYPES = [
-      "barchart",
-      "donut",
-      "map",
-      "multiline",
-      "scatterplot"
-    ]
-
-  // $(function() {
-  //   fetch('uniq')
-  //     .then(response => response.json())
-  //     .then(function(data) {
-  //       data = _.map(data, 'label')
-  //       $('body').template({CHART_TYPES: [...data, ...CHART_TYPES]})
-  //   })
-  // })
-  // $('#chartForm').on('submit', function(e) {
-  //   let $icon = $('<i class="fa fa-spinner fa-2x fa-fw align-middle"></i>').appendTo(this)
-  //   e.preventDefault()
-  //   let chart_url = $('#chartUrl').val()
-  //   $.getJSON('screenshot?url=' + encodeURI(chart_url)).done(
-  //     function(response) {
-  //       var {annotation, meta} = response
-  //       render_labelstudio(annotation, meta,
-  //         "Jaidev", "Deshpande")
-  //       $icon.fadeOut()
-  //     }
-  //   )
-  // })
+  $('#urlrun').click(function() {
+    $('#loading').removeClass('hidden')
+    $.getJSON('/screenshot?url=' + encodeURIComponent($('#imageURL').val()))
+      .done(
+        function(resp) {
+          $('#loading').addClass('hidden')
+          let {annotation, meta} = resp
+          render_labelstudio(annotation, meta,
+                             "Jaidev", "Deshpande")
+        }
+      )
+  })
   </script>
 </body>
 </html>

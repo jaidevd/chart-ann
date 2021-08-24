@@ -6,11 +6,12 @@ import os
 from gramex import data as gdata
 import gramex.cache
 from gramex.config import variables
-from gramex.handlers import MLHandler, Capture
+from gramex.handlers import MLHandler
 from gramex import service
 import matplotlib.pyplot as plt
 import pandas as pd
 from PIL import Image
+import requests
 from skimage.color import rgba2rgb
 from skimage.io import imread
 from skimage.measure import regionprops, label
@@ -30,7 +31,6 @@ try:
 except ArgumentError:
     pass
 
-capture = Capture(engine="chrome")
 MODEL_CACHE = {"_default": None}
 
 LABEL_ENCODER = ["barchart", "scatterplot", "treemap", "choropleth"]
@@ -240,7 +240,7 @@ def process_screenshot(handler):
     model = _cache_model(variables["model_path"])
     url = handler.get_arg("url", False)
     if url:
-        content = capture.png(url)
+        content = requests.get(url).content
     else:
         content = handler.request.files["file"][0]["body"]
     image = img_to_array(Image.open(BytesIO(content)).convert('RGB'))

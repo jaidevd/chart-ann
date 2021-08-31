@@ -38,7 +38,9 @@ LABEL_ENCODER = ["barchart", "scatterplot", "treemap", "choropleth"]
 
 def _cache_model(path):
     if not MODEL_CACHE["_default"]:
-        MODEL_CACHE["_default"] = WindowObjectDetector(load_model(path))
+        MODEL_CACHE["_default"] = WindowObjectDetector(
+            load_model(path), multires=variables["multiresolution"]
+        )
     return MODEL_CACHE["_default"]
 
 
@@ -53,7 +55,7 @@ def view(handler, table="charts", pk="chart_id"):
     return data
 
 
-view_page = lambda handler: view(handler, "pages", "page_id")  # NOQA: E731
+view_page = lambda handler: view(handler, "pages-4", "page_id")  # NOQA: E731
 
 
 class ChartAnnModelHandler(MLHandler):
@@ -243,12 +245,12 @@ def process_screenshot(handler):
         content = requests.get(url).content
     else:
         content = handler.request.files["file"][0]["body"]
-    image = img_to_array(Image.open(BytesIO(content)).convert('RGB'))
+    image = img_to_array(Image.open(BytesIO(content)).convert("RGB"))
     annotation = yield service.threadpool.submit(seg.get_pre_annotations, image, model)
     meta = {}
     gramex.data.insert(
         variables["COARSE_LABELS"],
-        table="pages",
+        table="pages-4",
         id="page_id",
         meta=meta,
         args={
@@ -256,6 +258,7 @@ def process_screenshot(handler):
                 "data:image/png;base64," + urlsafe_b64encode(content).decode("utf8")
             ],
             "url": [url if url else handler.request.files["file"][0]["filename"]],
+            "prediction": [json.dumps(annotation)]
         },
     )
     raise Return(json.dumps(dict(annotation=annotation, meta=meta)))

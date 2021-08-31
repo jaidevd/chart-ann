@@ -12,6 +12,7 @@ variables:
   COARSE_LABELS: sqlite:///$YAMLPATH/data/charts_coarse.db
   model_path: $YAMLPATH/checkpoints/resnet50-best.h5
   LENC: [bar, map, donut, line, scatter]
+  multiresolution: true
 
 # Notify testers what user ID and password to use
 test:

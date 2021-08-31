@@ -13,7 +13,6 @@ const lsConfig =
           <View>
             <Image name="img" value="$image"></Image>
             <RectangleLabels name="tag" toName="img">
-              <Label value="bar"></Label>
               <Label value="map"></Label>
               <Label value="line"></Label>
               <Label value="donut"></Label>

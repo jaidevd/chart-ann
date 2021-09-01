@@ -55,7 +55,7 @@ def view(handler, table="charts", pk="chart_id"):
     return data
 
 
-view_page = lambda handler: view(handler, "pages-4", "page_id")  # NOQA: E731
+view_page = lambda handler: view(handler, "pages-5", "page_id")  # NOQA: E731
 
 
 class ChartAnnModelHandler(MLHandler):
@@ -250,7 +250,7 @@ def process_screenshot(handler):
     meta = {}
     gramex.data.insert(
         variables["COARSE_LABELS"],
-        table="pages-4",
+        table="pages-5",
         id="page_id",
         meta=meta,
         args={

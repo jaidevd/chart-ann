@@ -74,7 +74,7 @@ url:
     handler: FormHandler
     kwargs:
       url: $COARSE_LABELS
-      table: pages-4
+      table: pages-5
       id: page_id
       xsrf_cookies: false
       # auth: *AUTHVARS

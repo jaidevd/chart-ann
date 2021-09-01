@@ -4,22 +4,12 @@ from tensorflow_addons.image import connected_components
 import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
-from math import ceil
 from gramex.config import app_log
-import pandas as pd
 
 
-def _get_patch_sizes(height, width, min_patchsize=56, min_patches=2, keep=8):
+def _get_patch_sizes(height, width, min_patches=2, max_patches=8):
     size = min(height, width)
-    sizes = [
-        min_patchsize * i for i in range(2, size // (min_patches * min_patchsize) + 1)
-    ]
-    final_sizes = {}
-    for size in sizes:
-        out_height = ceil((height - size + 1) / (size / 4))
-        out_width = ceil((width - size + 1) / (size / 4))
-        final_sizes[size] = (out_height, out_width)
-    return pd.Series(final_sizes).drop_duplicates(keep="last").tail(keep).index
+    return range(size // max_patches, size // min_patches + 1, size // max_patches)
 
 
 def draw_patches(x, **kwargs):
@@ -82,7 +72,7 @@ class Windowing(Layer):
             inputs = tf.image.resize(inputs, (new_height, new_width))
         if self.multires:
             tile_heights = tile_widths = _get_patch_sizes(
-                new_height, new_width, self.min_patchsize
+                new_height, new_width
             )
             app_log.info(
                 f"{len(tile_heights)} patches found for image of size ({height}, {width})"
@@ -113,7 +103,7 @@ class Windowing(Layer):
 class WindowObjectDetector(Model):
     trainable = False
 
-    def __init__(self, base, multires=False, bbox_threshold=0.5, min_patchsize=112):
+    def __init__(self, base, multires=False, bbox_threshold=0.9, min_patchsize='auto'):
         super(WindowObjectDetector, self).__init__()
         self.base = base
         self.bbox_threshold = bbox_threshold

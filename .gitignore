@@ -84,3 +84,5 @@ data/
 models/
 *.h5
 thumbnails/
+gallery/
+invision/

@@ -4,21 +4,15 @@ url:
     handler: FunctionHandler
     kwargs:
       function: chart_annotation.process_screenshot
-  modelhandler:
-    pattern: /$YAMLURL/predictChart/
-    handler: chart_annotation.ChartAnnModelHandler
-    kwargs:
-      path: $YAMLPATH/models/four-class.h5
-      xsrf_cookies: false
   chart-gallery:
     pattern: /$YAMLURL/gallery
     handler: FileHandler
     kwargs:
       path: $YAMLPATH/gallery.html
-      auth: &AUTHVARS
-        login_url: /$YAMLURL/google
-        membership:
-          - {hd: [gramener.com]}
+      # auth: &AUTHVARS
+      #   login_url: /$YAMLURL/google
+      #   membership:
+      #     - {hd: [gramener.com]}
       template: true
       headers:
         # Templates may have user-specific content. Cache privately.
@@ -31,7 +25,7 @@ url:
     kwargs:
       path: $YAMLPATH/labelstudio.html
       template: true
-      auth: *AUTHVARS
+      # auth: *AUTHVARS
   labelstudio/update:
     pattern: /$YAMLURL/updateLabel/(\d+)
     handler: FunctionHandler
@@ -39,14 +33,14 @@ url:
       function: chart_annotation.update_label
       xsrf_cookies: false
       methods: [PUT, POST, GET, DELETE]
-      auth: *AUTHVARS
+      # auth: *AUTHVARS
   chart_annotation-home:
     pattern: /$YAMLURL/
     handler: FileHandler
     kwargs:
       path: $YAMLPATH/index.html
       # See https://learn.gramener.com/guide/auth/#authorization for auth rules
-      auth: *AUTHVARS
+      # auth: *AUTHVARS
       template: true
       headers:
         # Templates may have user-specific content. Cache privately.
@@ -59,7 +53,7 @@ url:
     kwargs:
       path: $YAMLPATH/validate.html
       # See https://learn.gramener.com/guide/auth/#authorization for auth rules
-      auth: *AUTHVARS
+      # auth: *AUTHVARS
       template: true
       headers:
         # Templates may have user-specific content. Cache privately.
@@ -74,67 +68,67 @@ url:
       table: charts
       id: chart_id
       xsrf_cookies: false
-      auth: *AUTHVARS
+      # auth: *AUTHVARS
   chart-annotation/pages:
     pattern: /$YAMLURL/pages
     handler: FormHandler
     kwargs:
       url: $COARSE_LABELS
-      table: pages
+      table: pages-5
       id: page_id
       xsrf_cookies: false
-      auth: *AUTHVARS
+      # auth: *AUTHVARS
   chart_annotation/view-charts:
     pattern: /$YAMLURL/chart/(.*)
     handler: FunctionHandler
     kwargs:
       function: chart_annotation.view
-      auth: *AUTHVARS
+      # auth: *AUTHVARS
   chart_annotation/view-pages:
     pattern: /$YAMLURL/urlann/(.*)
     handler: FunctionHandler
     kwargs:
       function: chart_annotation.view_page
-      auth: *AUTHVARS
-  chart_annotation/unique-chart-names:
-    pattern: /$YAMLURL/uniq
-    handler: FormHandler
-    kwargs:
-      url: $DB_URL
-      query: "SELECT DISTINCT(label) FROM charts"
-      auth: *AUTHVARS
-      headers:
-        # cache for 1 day
-        Cache-Control: public, max-age=86400
-    cache: true
+      # auth: *AUTHVARS
+    # chart_annotation/unique-chart-names:
+    #   pattern: /$YAMLURL/uniq
+    #   handler: FormHandler
+    #   kwargs:
+    #     url: $DB_URL
+    #     query: "SELECT DISTINCT(label) FROM charts"
+    #     # auth: *AUTHVARS
+    #     headers:
+    #       # cache for 1 day
+    #       Cache-Control: public, max-age=86400
+    #   cache: true
   chart_annotation/one-chart:
     pattern: /$YAMLURL/onechart
     handler: FormHandler
     kwargs:
       url: $DB_URL
       query: "SELECT * FROM charts WHERE is_validated=0 LIMIT 1"
-      auth: *AUTHVARS
+      # auth: *AUTHVARS
   chart_annotation/revalidate-chart:
     pattern: /$YAMLURL/revalidate
     handler: FormHandler
     kwargs:
       url: $DB_URL
       query: "SELECT * FROM charts WHERE chart_id={chart_id}"
-      auth: *AUTHVARS
+      # auth: *AUTHVARS
   chart_annotation/validated:
     pattern: /$YAMLURL/validated
     handler: FormHandler
     kwargs:
       url: $DB_URL
       query: "SELECT label, validated_label, is_validated FROM charts WHERE is_validated=1"
-      auth: *AUTHVARS
+      # auth: *AUTHVARS
   chart_annotation/completions:
     pattern: /$YAMLURL/completions/(\d+)
     handler: FormHandler
     kwargs:
       url: $COARSE_LABELS
       query: "SELECT * FROM annotations WHERE chart_id={_0}"
-      auth: *AUTHVARS
+      # auth: *AUTHVARS
       modify: chart_annotation.modify_completions
   chart_annotation/login/google:
     pattern: /$YAMLURL/google   # Map this URL
